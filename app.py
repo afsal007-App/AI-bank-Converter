@@ -8,17 +8,15 @@ import pandas as pd
 import re
 import spacy
 import io
-import subprocess
+import os
 
-# Ensure spaCy model is installed
-def load_spacy_model():
-    try:
-        return spacy.load("en_core_web_sm")
-    except OSError:
-        subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
-        return spacy.load("en_core_web_sm")
-
-nlp = load_spacy_model()
+# Ensure spaCy model is installed before loading
+MODEL_NAME = "en_core_web_sm"
+try:
+    nlp = spacy.load(MODEL_NAME)
+except OSError:
+    os.system(f"python -m spacy download {MODEL_NAME}")
+    nlp = spacy.load(MODEL_NAME)
 
 # Extract text from PDFs
 def extract_text_from_pdf(pdf_path):
