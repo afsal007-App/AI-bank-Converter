@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import streamlit as st
 import pdfplumber
 import pytesseract
@@ -6,11 +8,19 @@ import pandas as pd
 import re
 import spacy
 import io
+import subprocess
 
-# Load NLP model
-nlp = spacy.load("en_core_web_sm")
+# Ensure spaCy model is installed
+def load_spacy_model():
+    try:
+        return spacy.load("en_core_web_sm")
+    except OSError:
+        subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm"])
+        return spacy.load("en_core_web_sm")
 
-# Function to extract text from a PDF
+nlp = load_spacy_model()
+
+# Extract text from PDFs
 def extract_text_from_pdf(pdf_path):
     text = ""
     with pdfplumber.open(pdf_path) as pdf:
@@ -18,7 +28,7 @@ def extract_text_from_pdf(pdf_path):
             text += page.extract_text() + "\n"
     return text
 
-# Function for OCR-based extraction
+# OCR-based extraction
 def extract_text_with_ocr(pdf_path):
     images = convert_from_path(pdf_path)
     text = "\n".join([pytesseract.image_to_string(img) for img in images])
@@ -27,7 +37,7 @@ def extract_text_with_ocr(pdf_path):
 # Extract transactions using regex
 def extract_transactions(text):
     transactions = []
-    pattern = re.compile(r"(\\d{2}/\\d{2}/\\d{4})\\s+(.+?)\\s+(-?\\d{1,3}(?:,\\d{3})*\\.\\d{2})?\\s+(-?\\d{1,3}(?:,\\d{3})*\\.\\d{2})?")
+    pattern = re.compile(r"(\d{2}/\d{2}/\d{4})\s+(.+?)\s+(-?\d{1,3}(?:,\d{3})*\.\d{2})?\s+(-?\d{1,3}(?:,\d{3})*\.\d{2})?")
     
     matches = pattern.findall(text)
     for match in matches:
