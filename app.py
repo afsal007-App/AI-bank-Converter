@@ -1,24 +1,17 @@
-# -*- coding: utf-8 -*-
-
 import streamlit as st
 import pdfplumber
 import pytesseract
-from pdf2image import convert_from_path
 import pandas as pd
 import re
-import spacy
-import io
-import os
+from pdf2image import convert_from_path
+from PIL import Image
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 
-# Ensure spaCy model is installed before loading
-MODEL_NAME = "en_core_web_sm"
-try:
-    nlp = spacy.load(MODEL_NAME)
-except OSError:
-    os.system(f"python -m spacy download {MODEL_NAME}")
-    nlp = spacy.load(MODEL_NAME)
-
-# Extract text from PDFs
+# Function to extract text from PDF
 def extract_text_from_pdf(pdf_path):
     text = ""
     with pdfplumber.open(pdf_path) as pdf:
@@ -26,66 +19,57 @@ def extract_text_from_pdf(pdf_path):
             text += page.extract_text() + "\n"
     return text
 
-# OCR-based extraction
-def extract_text_with_ocr(pdf_path):
+# Function to extract text from scanned PDFs using OCR
+def extract_text_from_scanned_pdf(pdf_path):
     images = convert_from_path(pdf_path)
-    text = "\n".join([pytesseract.image_to_string(img) for img in images])
+    text = ""
+    for img in images:
+        text += pytesseract.image_to_string(img) + "\n"
     return text
 
-# Extract transactions using regex
-def extract_transactions(text):
+# Function to parse extracted text into structured format
+def parse_text(text):
     transactions = []
-    pattern = re.compile(r"(\d{2}/\d{2}/\d{4})\s+(.+?)\s+(-?\d{1,3}(?:,\d{3})*\.\d{2})?\s+(-?\d{1,3}(?:,\d{3})*\.\d{2})?")
+    lines = text.split("\n")
+    for line in lines:
+        match = re.search(r'(\d{2}/\d{2}/\d{4})\s+(.+)\s+(-?\d+\.\d{2})', line)
+        if match:
+            date, description, amount = match.groups()
+            transactions.append({
+                'Date': date,
+                'Description': description.strip(),
+                'Amount': float(amount)
+            })
+    return pd.DataFrame(transactions)
+
+# Function to classify transactions
+def train_transaction_classifier(data):
+    vectorizer = TfidfVectorizer()
+    X_train, X_test, y_train, y_test = train_test_split(data['Description'], data['Category'], test_size=0.2, random_state=42)
+    model = make_pipeline(TfidfVectorizer(), MultinomialNB())
+    model.fit(X_train, y_train)
+    predictions = model.predict(X_test)
+    print(f'Classification Accuracy: {accuracy_score(y_test, predictions)}')
+    return model
+
+# Streamlit UI
+st.title("Bank Statement PDF Converter")
+
+uploaded_file = st.file_uploader("Upload your bank statement (PDF)", type=["pdf"])
+if uploaded_file is not None:
+    with open("temp.pdf", "wb") as f:
+        f.write(uploaded_file.getbuffer())
     
-    matches = pattern.findall(text)
-    for match in matches:
-        date, description, debit, credit = match
-        transactions.append({
-            "Date": date,
-            "Description": description.strip(),
-            "Debit": float(debit.replace(',', '')) if debit else 0.00,
-            "Credit": float(credit.replace(',', '')) if credit else 0.00
-        })
-    return transactions
-
-# Convert transactions to Excel
-def save_to_excel(transactions):
-    output = io.BytesIO()
-    df = pd.DataFrame(transactions)
-    df.to_excel(output, index=False)
-    output.seek(0)
-    return output
-
-# Streamlit Web App UI
-st.title("🏦 AI Bank Statement Converter")
-st.write("Upload a bank statement in PDF format, and the app will extract transactions automatically.")
-
-uploaded_file = st.file_uploader("Upload a Bank Statement PDF", type=["pdf"])
-
-if uploaded_file:
-    st.success("✅ PDF uploaded successfully! Extracting transactions...")
-
-    # Extract text from PDF
-    text = extract_text_from_pdf(uploaded_file)
-    if not text.strip():
-        st.warning("⚠️ No selectable text found, using OCR instead...")
-        text = extract_text_with_ocr(uploaded_file)
-
-    # Extract transactions
-    transactions = extract_transactions(text)
+    st.text("Extracting data...")
+    text = extract_text_from_pdf("temp.pdf")
+    df = parse_text(text)
     
-    if transactions:
-        st.subheader("📜 Extracted Transactions")
-        df_transactions = pd.DataFrame(transactions)
-        st.dataframe(df_transactions)
+    st.dataframe(df)
+    
+    csv = df.to_csv(index=False).encode('utf-8')
+    st.download_button("Download CSV", csv, "bank_statement.csv", "text/csv", key='download-csv')
 
-        # Provide download option
-        excel_output = save_to_excel(transactions)
-        st.download_button(
-            label="⬇️ Download Extracted Transactions as Excel",
-            data=excel_output,
-            file_name="bank_statement.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-    else:
-        st.error("⚠️ No transactions were detected in the uploaded PDF.")
+# Main entry point
+if __name__ == "__main__":
+    st.sidebar.header("PDF Bank Statement Converter")
+    st.sidebar.text("Upload a bank statement PDF to extract and categorize transactions.")
