@@ -5,6 +5,7 @@ import fitz  # PyMuPDF
 import pandas as pd
 import io
 import re
+import numpy as np
 
 # Regular expression to match transaction entries (horizontal format)
 transaction_pattern_horizontal = re.compile(
@@ -93,17 +94,35 @@ def process(pdf_files):
     columns = ["Transaction Date", "Value Date", "Narration", "Debit Amount", "Credit Amount", "Running Balance"]
     df = pd.DataFrame(all_transactions, columns=columns)
 
-    # Remove duplicate header rows
-    df = df[df["Transaction Date"] != "Value Date"]
+    # Debugging: Show transaction count before filtering
+    st.write("📊 Transactions Before Cleaning:", df.shape)
 
-    # Remove blank or missing transaction date rows
+    # ✅ 1. Standardize all values to string & strip whitespace
+    df = df.astype(str).apply(lambda x: x.str.strip())
+
+    # ✅ 2. Convert "nan" and "None" values to real NaN
+    df.replace(["nan", "None", "N/A", ""], np.nan, inplace=True)
+
+    # ✅ 3. Remove invalid "Value Date" headers appearing as rows
+    df = df[~df["Transaction Date"].str.contains("Value Date", na=False, case=False)]
+    df = df[~df["Narration"].str.contains("Narration", na=False, case=False)]
+
+    # ✅ 4. Remove rows where "Transaction Date" is blank or NaN
     df = df.dropna(subset=["Transaction Date"])
-    df = df[df["Transaction Date"].str.strip() != ""]
 
-    # Convert Transaction Date to datetime and sort
+    # ✅ 5. Convert Transaction Date to datetime
     df["Transaction Date"] = pd.to_datetime(df["Transaction Date"], format="%d-%m-%Y", errors="coerce")
+
+    # ✅ 6. Remove rows where "Transaction Date" is still NaN (invalid dates)
+    df = df.dropna(subset=["Transaction Date"])
+
+    # ✅ 7. Sort transactions
     df = df.sort_values(by="Transaction Date", ascending=True)
 
+    # Debugging: Show transaction count after filtering
+    st.write("📊 Transactions After Cleaning:", df.shape)
+
     if df.empty:
-        st.warning("No transactions found. Please check if the correct PDF is uploaded.")
+        st.warning("⚠️ No valid transactions found after filtering. Please check if the correct PDF is uploaded.")
+    
     return df
