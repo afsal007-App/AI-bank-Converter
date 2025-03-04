@@ -101,7 +101,7 @@ def process(pdf_files):
 
       # ✅ Remove rows where "Transaction Date" is NaN or "None"
     df = df.dropna(subset=["Transaction Date"])
-    df = df[df["Transaction Date"].str.strip() != ""]
+    df = df[df["Transaction Date"].str.strip() != "None"]
 
     # Convert Transaction Date to datetime and sort
     df["Transaction Date"] = pd.to_datetime(df["Transaction Date"], format="%d-%m-%Y", errors="coerce")
