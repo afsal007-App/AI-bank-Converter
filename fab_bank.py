@@ -1,4 +1,8 @@
 import streamlit as st
+
+# ✅ Move `set_page_config` to the first command
+st.set_page_config(page_title="FAB PDF to Excel Converter", layout="wide")
+
 import pdfplumber
 import pandas as pd
 import re
@@ -46,7 +50,6 @@ def extract_fab_transactions(pdf_file):
 # ---------------------------
 # Streamlit UI
 # ---------------------------
-st.set_page_config(page_title="FAB PDF to Excel Converter", layout="wide")
 
 st.title("FAB Bank Statement PDF Extractor")
 
