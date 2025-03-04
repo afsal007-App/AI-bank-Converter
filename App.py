@@ -10,7 +10,7 @@ sys.path.append(os.path.dirname(__file__))
 # Define available banks and their corresponding Python files
 BANK_OPTIONS = {
     "Emirates Islamic Bank": "emirates_islamic_bank",
-    "Al Jazira Bank": "al_jazira_bank"
+    "Al Jazira Bank": "al_jazira_bank",
     "FAB Bank": "fab_bank"
 }
 
