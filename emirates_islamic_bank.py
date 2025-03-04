@@ -1,13 +1,10 @@
+import streamlit as st
 import pdfplumber
 import PyPDF2
 import fitz  # PyMuPDF
 import pandas as pd
 import io
 import re
-import ipywidgets as widgets
-from IPython.display import display
-from google.colab import files
-from google.colab.data_table import DataTable  # Interactive preview
 
 # Regular expression to match transaction entries (horizontal format)
 transaction_pattern_horizontal = re.compile(
@@ -17,7 +14,7 @@ transaction_pattern_horizontal = re.compile(
 # Function to extract text using PyPDF2
 def extract_text_pypdf2(pdf_bytes):
     text = ""
-    pdf_bytes.seek(0)  # Reset the BytesIO position
+    pdf_bytes.seek(0)
     reader = PyPDF2.PdfReader(pdf_bytes)
     for page in reader.pages:
         text += page.extract_text() + "\n"
@@ -26,7 +23,7 @@ def extract_text_pypdf2(pdf_bytes):
 # Function to extract text using PyMuPDF (fitz)
 def extract_text_pymupdf(pdf_bytes):
     text = ""
-    pdf_bytes.seek(0)  # Reset the BytesIO position
+    pdf_bytes.seek(0)
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     for page in doc:
         text += page.get_text("text") + "\n"
@@ -35,13 +32,13 @@ def extract_text_pymupdf(pdf_bytes):
 # Function to extract text using pdfplumber
 def extract_text_pdfplumber(pdf_bytes):
     text = ""
-    pdf_bytes.seek(0)  # Reset the BytesIO position
+    pdf_bytes.seek(0)
     with pdfplumber.open(pdf_bytes) as pdf:
         for page in pdf.pages:
             text += page.extract_text() + "\n"
     return text
 
-# Function to extract transactions from text (horizontal format)
+# Function to extract transactions from text
 def extract_transactions_horizontal(text):
     transactions = []
     lines = text.split("\n")
@@ -59,81 +56,28 @@ def extract_transactions_horizontal(text):
 
     return transactions
 
-# Function to extract transactions using a vertical method (table-based)
-def extract_transactions_vertical(pdf_bytes):
-    transactions = []
-    pdf_bytes.seek(0)  # Reset the BytesIO position
-    with pdfplumber.open(pdf_bytes) as pdf:
-        for page in pdf.pages:
-            table = page.extract_table()
-            if table:
-                for row in table:
-                    if len(row) >= 6:  # Ensure it's a valid transaction row
-                        transactions.append(row)
-
-    return transactions
-
 # Function to process multiple PDFs
-def process_pdfs(pdf_files):
-    all_transactions = []
+def process(pdf_files):
+    st.info("Processing Emirates Islamic Bank statement...")
 
+    all_transactions = []
     for pdf_file in pdf_files:
-        # Try extracting text using multiple methods
         text_pypdf2 = extract_text_pypdf2(pdf_file)
         text_pymupdf = extract_text_pymupdf(pdf_file)
         text_pdfplumber = extract_text_pdfplumber(pdf_file)
 
-        # Choose the longest extracted text (most complete)
         text = max([text_pypdf2, text_pymupdf, text_pdfplumber], key=len)
 
-        # Extract transactions using horizontal method
         transactions_horizontal = extract_transactions_horizontal(text)
 
-        # Extract transactions using vertical method
-        transactions_vertical = extract_transactions_vertical(pdf_file)
-
-        # Combine results
         all_transactions.extend(transactions_horizontal)
-        all_transactions.extend(transactions_vertical)
 
     # Create DataFrame
     columns = ["Transaction Date", "Value Date", "Narration", "Debit Amount", "Credit Amount", "Running Balance"]
     df = pd.DataFrame(all_transactions, columns=columns)
 
-    # Remove duplicate header rows
-    df = df[df["Transaction Date"] != "Value Date"]
-
-    # Remove blank or missing transaction date rows
-    df = df.dropna(subset=["Transaction Date"])
-    df = df[df["Transaction Date"].str.strip() != ""]
-
-    # Convert Transaction Date to datetime and sort
+    # Convert Transaction Date to datetime
     df["Transaction Date"] = pd.to_datetime(df["Transaction Date"], format="%d-%m-%Y", errors="coerce")
     df = df.sort_values(by="Transaction Date", ascending=True)
 
     return df
-
-# Upload multiple PDF files
-uploaded_files = files.upload()
-
-# Process all uploaded PDFs
-pdf_paths = [io.BytesIO(uploaded_files[file]) for file in uploaded_files]
-df_final = process_pdfs(pdf_paths)
-
-# Remove blank rows from "Transaction Date" column
-df_final_cleaned = df_final.dropna(subset=["Transaction Date"]).reset_index(drop=True)
-
-# Display the cleaned DataFrame interactively
-DataTable(df_final_cleaned)
-
-# Save cleaned DataFrame as CSV
-csv_filename = "Final_Cleaned_Transactions.csv"
-df_final_cleaned.to_csv(csv_filename, index=False)
-
-# Create Download Button
-def download_file(b):
-    files.download(csv_filename)
-
-download_button = widgets.Button(description="Download Final Cleaned Transactions")
-download_button.on_click(download_file)
-display(download_button)
