@@ -1,0 +1,4 @@
+pymupdf
+PyPDF2
+pdfplumber
+pandas
