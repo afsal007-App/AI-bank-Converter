@@ -1,8 +1,0 @@
-streamlit
-pdfplumber
-pytesseract
-pandas
-pdf2image
-Pillow
-scikit-learn
-spacy
