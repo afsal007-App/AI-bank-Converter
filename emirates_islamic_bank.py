@@ -93,6 +93,9 @@ def process(pdf_files):
     columns = ["Transaction Date", "Value Date", "Narration", "Debit Amount", "Credit Amount", "Running Balance"]
     df = pd.DataFrame(all_transactions, columns=columns)
 
+    # Debugging: Show transaction count before filtering
+    st.write("📊 Transactions Before Filtering:", df.shape)
+
     # Remove duplicate header rows
     df = df[df["Transaction Date"] != "Value Date"]
 
@@ -104,6 +107,10 @@ def process(pdf_files):
     df["Transaction Date"] = pd.to_datetime(df["Transaction Date"], format="%d-%m-%Y", errors="coerce")
     df = df.sort_values(by="Transaction Date", ascending=True)
 
+    # Debugging: Show transaction count after filtering
+    st.write("📊 Transactions After Filtering:", df.shape)
+
     if df.empty:
-        st.warning("No transactions found. Please check if the correct PDF is uploaded.")
+        st.warning("⚠️ No transactions found after filtering. Please check if the correct PDF is uploaded.")
+    
     return df
