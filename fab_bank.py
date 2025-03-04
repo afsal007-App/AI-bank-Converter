@@ -1,11 +1,10 @@
-import streamlit as st
 import pdfplumber
 import pandas as pd
 import re
 import io
 
 # ---------------------------
-# FAB Extraction Function (Streamlit-Compatible)
+# FAB Extraction Function
 # ---------------------------
 def extract_fab_transactions(pdf_bytes):
     transactions = []
@@ -14,9 +13,6 @@ def extract_fab_transactions(pdf_bytes):
     pdf_bytes.seek(0)
     with pdfplumber.open(pdf_bytes) as pdf:
         combined_text = "\n".join([page.extract_text() for page in pdf.pages if page.extract_text()])
-
-    # Debugging: Show raw extracted text
-    st.write("📜 Extracted Text (FAB):", combined_text[:1000])  # Display first 1000 characters
 
     # FAB transaction regex pattern
     full_desc_pattern = re.compile(
@@ -41,35 +37,19 @@ def extract_fab_transactions(pdf_bytes):
     return df
 
 # ---------------------------
-# Streamlit UI
+# ✅ REQUIRED process() FUNCTION
 # ---------------------------
-st.title("FAB Bank Statement PDF Extractor")
-
-# Upload PDF Files
-uploaded_files = st.file_uploader("Upload FAB PDF Statements", type=["pdf"], accept_multiple_files=True)
-
-if uploaded_files:
+def process(pdf_files):
     all_transactions = []
 
-    for uploaded_file in uploaded_files:
-        pdf_bytes = io.BytesIO(uploaded_file.read())  # Convert file to BytesIO
-
+    for pdf_file in pdf_files:
+        pdf_bytes = io.BytesIO(pdf_file.getvalue())  # Convert file to BytesIO
         df = extract_fab_transactions(pdf_bytes)
 
         if not df.empty:
             all_transactions.append(df)
 
     if all_transactions:
-        final_df = pd.concat(all_transactions, ignore_index=True)
-        st.write("### Extracted Transactions")
-        st.dataframe(final_df)
-
-        # Download Button
-        st.download_button(
-            label="Download Transactions as CSV",
-            data=final_df.to_csv(index=False).encode("utf-8"),
-            file_name="FAB_Transactions.csv",
-            mime="text/csv"
-        )
+        return pd.concat(all_transactions, ignore_index=True)
     else:
-        st.warning("⚠️ No transactions found in the uploaded PDF.")
+        return pd.DataFrame(columns=["Transaction Date", "Value Date", "Description", "Withdrawal (Dr)", "Deposit (Cr)", "Running Balance"])
