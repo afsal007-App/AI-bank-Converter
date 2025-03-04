@@ -38,13 +38,13 @@ def extract_text_pdfplumber(pdf_bytes):
             text += page.extract_text() + "\n"
     return text
 
-# Function to extract transactions from text
+# Function to extract transactions from text (horizontal format)
 def extract_transactions_horizontal(text):
     transactions = []
     lines = text.split("\n")
 
-    for i in range(len(lines)):
-        match = transaction_pattern_horizontal.match(lines[i])
+    for line in lines:
+        match = transaction_pattern_horizontal.match(line)
         if match:
             transaction_date = match.group(1).strip()
             value_date = match.group(2).strip()
@@ -56,11 +56,26 @@ def extract_transactions_horizontal(text):
 
     return transactions
 
+# Function to extract transactions using a vertical method (table-based)
+def extract_transactions_vertical(pdf_bytes):
+    transactions = []
+    pdf_bytes.seek(0)
+    with pdfplumber.open(pdf_bytes) as pdf:
+        for page in pdf.pages:
+            table = page.extract_table()
+            if table:
+                for row in table:
+                    if len(row) >= 6:
+                        transactions.append(row)
+
+    return transactions
+
 # Function to process multiple PDFs
 def process(pdf_files):
     st.info("Processing Emirates Islamic Bank statement...")
 
     all_transactions = []
+
     for pdf_file in pdf_files:
         text_pypdf2 = extract_text_pypdf2(pdf_file)
         text_pymupdf = extract_text_pymupdf(pdf_file)
@@ -69,15 +84,26 @@ def process(pdf_files):
         text = max([text_pypdf2, text_pymupdf, text_pdfplumber], key=len)
 
         transactions_horizontal = extract_transactions_horizontal(text)
+        transactions_vertical = extract_transactions_vertical(pdf_file)
 
         all_transactions.extend(transactions_horizontal)
+        all_transactions.extend(transactions_vertical)
 
     # Create DataFrame
     columns = ["Transaction Date", "Value Date", "Narration", "Debit Amount", "Credit Amount", "Running Balance"]
     df = pd.DataFrame(all_transactions, columns=columns)
 
-    # Convert Transaction Date to datetime
+    # Remove duplicate header rows
+    df = df[df["Transaction Date"] != "Value Date"]
+
+    # Remove blank or missing transaction date rows
+    df = df.dropna(subset=["Transaction Date"])
+    df = df[df["Transaction Date"].str.strip() != ""]
+
+    # Convert Transaction Date to datetime and sort
     df["Transaction Date"] = pd.to_datetime(df["Transaction Date"], format="%d-%m-%Y", errors="coerce")
     df = df.sort_values(by="Transaction Date", ascending=True)
 
+    if df.empty:
+        st.warning("No transactions found. Please check if the correct PDF is uploaded.")
     return df
