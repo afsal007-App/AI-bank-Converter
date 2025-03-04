@@ -28,9 +28,10 @@ def extract_transactions(pdf_bytes):
             if not text:
                 continue
 
-            st.write("🔍 Extracted Text from PDF Page:\n", text[:1000])  # Show first 1000 characters for debugging
+            text = convert_arabic_indic_to_western(text)  # Convert Arabic numbers
+            st.write("🔍 Extracted Text from PDF Page:\n", text[:1000])  # Debugging
 
-            lines = [convert_arabic_indic_to_western(line.strip()) for line in text.strip().split('\n') if line.strip()]
+            lines = [line.strip() for line in text.split('\n') if line.strip()]
 
             for line in lines:
                 date_match = re.search(date_pattern, line)
@@ -43,10 +44,11 @@ def extract_transactions(pdf_bytes):
                     date = date_match.group(1)
                     line = line.replace(date, '').strip()
                     amounts = re.findall(amount_pattern, line)
-                    withdrawal, balance = (amounts[:2] if len(amounts) >= 2 else (None, None))
 
-                    if withdrawal and balance:
-                        line = re.sub(amount_pattern, '', line, count=2).strip()
+                    if len(amounts) >= 2:
+                        withdrawal, balance = amounts[:2]
+                    else:
+                        withdrawal, balance = (None, None)
 
                     current_transaction = {
                         'Date': date,
@@ -67,7 +69,7 @@ def extract_transactions(pdf_bytes):
 
 # ✅ Streamlit Function for PDF Extraction
 def process(pdf_files):
-    st.info("Extracting transactions from Arabic bank statement...")
+    st.info("Extracting transactions from Aljazira bank statement...")
 
     all_transactions = []
 
@@ -82,4 +84,3 @@ def process(pdf_files):
     else:
         st.warning("⚠️ No transactions found in the uploaded PDF.")
         return pd.DataFrame()
-
