@@ -11,6 +11,7 @@ sys.path.append(os.path.dirname(__file__))
 BANK_OPTIONS = {
     "Emirates Islamic Bank": "emirates_islamic_bank",
     "Al Jazira Bank": "al_jazira_bank"
+    "FAB Bank": "FAB"
 }
 
 st.title("Bank Statement PDF Converter")
