@@ -1,6 +1,0 @@
-__pycache__/
-*.log
-*.csv
-*.db
-venv/
-temp.pdf
