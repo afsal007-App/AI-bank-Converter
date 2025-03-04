@@ -34,65 +34,41 @@ def extract_text_pymupdf(pdf_bytes):
         text += page.get_text("text") + "\n"
     return text
 
-# 📝 Extract transactions using pdfplumber (Table Extraction)
-def extract_transactions_pdfplumber(pdf_bytes):
-    transactions = []
-    
+# 📝 Extract text using pdfplumber
+def extract_text_pdfplumber(pdf_bytes):
+    text = ""
+    pdf_bytes.seek(0)
     with pdfplumber.open(pdf_bytes) as pdf:
         for page in pdf.pages:
-            table = page.extract_table()
-            if not table:
-                continue  # Skip if no table is found
+            text += page.extract_text() + "\n"
+    return text
 
-            df = pd.DataFrame(table)
-
-            # Debugging: Show extracted table
-            st.write("📊 Extracted Table Data (PDFPlumber):", df.head())
-
-            # Define column names (Adjust based on actual PDF structure)
-            df.columns = ["Transaction Date", "Value Date", "Description", "Withdrawal (Dr)", "Deposit (Cr)", "Running Balance"]
-
-            # Drop empty or invalid rows
-            df = df.dropna(subset=["Transaction Date", "Description"]).reset_index(drop=True)
-
-            # Apply Arabic-Indic conversion
-            df = df.applymap(lambda x: convert_arabic_indic_to_western(str(x)) if pd.notnull(x) else x)
-
-            # Append to transactions list
-            transactions.append(df)
-
-    if transactions:
-        return pd.concat(transactions, ignore_index=True)
-    else:
-        return pd.DataFrame(columns=["Transaction Date", "Value Date", "Description", "Withdrawal (Dr)", "Deposit (Cr)", "Running Balance"])
-
-# ✅ Streamlit Function for PDF Extraction Using Multiple Methods
+# ✅ Streamlit Function to Extract Raw Data
 def process(pdf_files):
-    st.info("Extracting transactions from Aljazira bank statement using multiple methods...")
+    st.info("Extracting text from Aljazira bank statement...")
 
-    all_transactions = []
+    all_texts = []
 
     for pdf_file in pdf_files:
-        # Extract using PyPDF2
         text_pypdf2 = extract_text_pypdf2(pdf_file)
-
-        # Extract using PyMuPDF (fitz)
         text_pymupdf = extract_text_pymupdf(pdf_file)
+        text_pdfplumber = extract_text_pdfplumber(pdf_file)
 
-        # Extract table-based structured data using pdfplumber
-        df_pdfplumber = extract_transactions_pdfplumber(pdf_file)
+        # Convert Arabic-Indic numbers
+        text_pypdf2 = convert_arabic_indic_to_western(text_pypdf2)
+        text_pymupdf = convert_arabic_indic_to_western(text_pymupdf)
+        text_pdfplumber = convert_arabic_indic_to_western(text_pdfplumber)
 
-        # Debugging: Show extracted raw text
-        st.write("📜 Extracted Text (PyPDF2):", text_pypdf2[:1000])  # Show first 1000 chars
+        # Debugging: Show Extracted Text
+        st.write("📜 Extracted Text (PyPDF2):", text_pypdf2[:1000])  # First 1000 chars
         st.write("📜 Extracted Text (PyMuPDF):", text_pymupdf[:1000])
+        st.write("📜 Extracted Text (pdfplumber):", text_pdfplumber[:1000])
 
-        # If table-based extraction works, prioritize it
-        if not df_pdfplumber.empty:
-            all_transactions.append(df_pdfplumber)
+        # Store all extracted text for analysis
+        all_texts.append(text_pypdf2)
+        all_texts.append(text_pymupdf)
+        all_texts.append(text_pdfplumber)
 
-    if all_transactions:
-        final_df = pd.concat(all_transactions, ignore_index=True)
-        return final_df
-    else:
-        st.warning("⚠️ No structured transactions found in the uploaded PDF.")
-        return pd.DataFrame()
+    if not any(all_texts):
+        st.warning("⚠️ No text was extracted. The PDF may be scanned.")
+    return all_texts
