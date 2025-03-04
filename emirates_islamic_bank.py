@@ -1,10 +1,13 @@
-import streamlit as st
 import pdfplumber
 import PyPDF2
 import fitz  # PyMuPDF
 import pandas as pd
 import io
 import re
+import ipywidgets as widgets
+from IPython.display import display
+from google.colab import files
+from google.colab.data_table import DataTable  # Interactive preview
 
 # Regular expression to match transaction entries (horizontal format)
 transaction_pattern_horizontal = re.compile(
@@ -97,28 +100,40 @@ def process_pdfs(pdf_files):
     columns = ["Transaction Date", "Value Date", "Narration", "Debit Amount", "Credit Amount", "Running Balance"]
     df = pd.DataFrame(all_transactions, columns=columns)
 
+    # Remove duplicate header rows
+    df = df[df["Transaction Date"] != "Value Date"]
+
+    # Remove blank or missing transaction date rows
+    df = df.dropna(subset=["Transaction Date"])
+    df = df[df["Transaction Date"].str.strip() != ""]
+
     # Convert Transaction Date to datetime and sort
     df["Transaction Date"] = pd.to_datetime(df["Transaction Date"], format="%d-%m-%Y", errors="coerce")
     df = df.sort_values(by="Transaction Date", ascending=True)
 
     return df
 
-# Streamlit UI
-st.title("Bank Statement PDF Converter")
+# Upload multiple PDF files
+uploaded_files = files.upload()
 
-uploaded_files = st.file_uploader("Upload Bank PDF Statements", type=["pdf"], accept_multiple_files=True)
+# Process all uploaded PDFs
+pdf_paths = [io.BytesIO(uploaded_files[file]) for file in uploaded_files]
+df_final = process_pdfs(pdf_paths)
 
-if uploaded_files:
-    pdf_paths = [io.BytesIO(file.getvalue()) for file in uploaded_files]
-    df_final = process_pdfs(pdf_paths)
+# Remove blank rows from "Transaction Date" column
+df_final_cleaned = df_final.dropna(subset=["Transaction Date"]).reset_index(drop=True)
 
-    st.write("### Extracted Transactions")
-    st.dataframe(df_final)
+# Display the cleaned DataFrame interactively
+DataTable(df_final_cleaned)
 
-    # Allow CSV Download
-    st.download_button(
-        label="Download Extracted Transactions",
-        data=df_final.to_csv(index=False).encode("utf-8"),
-        file_name="Extracted_Transactions.csv",
-        mime="text/csv"
-    )
+# Save cleaned DataFrame as CSV
+csv_filename = "Final_Cleaned_Transactions.csv"
+df_final_cleaned.to_csv(csv_filename, index=False)
+
+# Create Download Button
+def download_file(b):
+    files.download(csv_filename)
+
+download_button = widgets.Button(description="Download Final Cleaned Transactions")
+download_button.on_click(download_file)
+display(download_button)
