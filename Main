@@ -5,8 +5,7 @@ import io
 # Define available banks and their corresponding Python files
 BANK_OPTIONS = {
     "Emirates Islamic Bank": "emirates_islamic_bank",
-    "Al Jazira": "hsbc",
-    "Citibank": "citibank"
+    "Al Jazira": "al_jazira_bank",
 }
 
 st.title("Bank Statement PDF Converter")
