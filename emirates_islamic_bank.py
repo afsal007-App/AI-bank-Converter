@@ -99,7 +99,7 @@ def process(pdf_files):
     # Remove duplicate header rows
     df = df[df["Transaction Date"] != "Value Date"]
 
-    # Remove blank or missing transaction date rows
+      # ✅ Remove rows where "Transaction Date" is NaN or "None"
     df = df.dropna(subset=["Transaction Date"])
     df = df[df["Transaction Date"].str.strip() != ""]
 
