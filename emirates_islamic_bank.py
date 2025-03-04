@@ -137,6 +137,4 @@ download_button = widgets.Button(description="Download Extracted Transactions")
 download_button.on_click(download_file)
 display(download_button)
 
-!pip install pymupdf PyPDF2 pdfplumber pandas
-!pip install ace-tools # Install ace_tools using pip
 
