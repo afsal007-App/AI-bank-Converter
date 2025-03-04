@@ -82,3 +82,4 @@ def process(pdf_files):
     else:
         st.warning("⚠️ No transactions found in the uploaded PDF.")
         return pd.DataFrame()
+
