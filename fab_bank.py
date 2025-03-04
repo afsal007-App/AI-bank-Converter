@@ -1,26 +1,31 @@
-import pdfplumber
-import pandas as pd
-import re
-import io
-
-# ---------------------------
-# FAB Extraction Function
-# ---------------------------
 def extract_fab_transactions(pdf_bytes):
     transactions = []
     combined_text = ""
 
     pdf_bytes.seek(0)
     with pdfplumber.open(pdf_bytes) as pdf:
-        combined_text = "\n".join([page.extract_text() for page in pdf.pages if page.extract_text()])
+        for page in pdf.pages:
+            text = page.extract_text()
+            if text:
+                combined_text += text + "\n"
 
-    # FAB transaction regex pattern
+    # Debugging: Show raw extracted text
+    st.write("📜 Extracted Text from PDF:", combined_text[:1000])  # Show first 1000 characters
+
+    if not combined_text.strip():
+        st.error("❌ No text was extracted from the PDF! This could mean it's a scanned image.")
+        return pd.DataFrame()
+
+    # Regex pattern for FAB bank transactions
     full_desc_pattern = re.compile(
         r"(\d{2} \w{3} \d{4})\s+(\d{2} \w{3} \d{4})\s+(.+?)\s+([\d,]*\.\d{2})?\s+([\d,]*\.\d{2})?\s+([\d,]*\.\d{2})",
         re.MULTILINE,
     )
 
     matches = list(full_desc_pattern.finditer(combined_text))
+
+    if not matches:
+        st.error("⚠️ No transactions were found using regex. The pattern may need adjustments.")
 
     for match in matches:
         date, value_date, description, debit, credit, balance = match.groups()
@@ -35,21 +40,3 @@ def extract_fab_transactions(pdf_bytes):
 
     df = pd.DataFrame(transactions, columns=["Transaction Date", "Value Date", "Description", "Withdrawal (Dr)", "Deposit (Cr)", "Running Balance"])
     return df
-
-# ---------------------------
-# ✅ REQUIRED process() FUNCTION
-# ---------------------------
-def process(pdf_files):
-    all_transactions = []
-
-    for pdf_file in pdf_files:
-        pdf_bytes = io.BytesIO(pdf_file.getvalue())  # Convert file to BytesIO
-        df = extract_fab_transactions(pdf_bytes)
-
-        if not df.empty:
-            all_transactions.append(df)
-
-    if all_transactions:
-        return pd.concat(all_transactions, ignore_index=True)
-    else:
-        return pd.DataFrame(columns=["Transaction Date", "Value Date", "Description", "Withdrawal (Dr)", "Deposit (Cr)", "Running Balance"])
