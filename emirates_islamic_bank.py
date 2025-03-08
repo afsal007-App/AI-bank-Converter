@@ -115,16 +115,8 @@ def process(pdf_files):
     # ✅ 7. Sort transactions
     df = df.sort_values(by="Transaction Date", ascending=True)
 
-    # ✅ 8. Normalize text columns to prevent minor variations causing duplicates
-    df["Narration"] = df["Narration"].str.lower().str.strip()
-
-    # ✅ 9. Convert amount fields to numeric (removing commas)
-    df["Debit Amount"] = df["Debit Amount"].str.replace(",", "").astype(float)
-    df["Credit Amount"] = df["Credit Amount"].str.replace(",", "").astype(float)
-    df["Running Balance"] = df["Running Balance"].str.replace(",", "").astype(float)
-
-    # ✅ 10. Remove duplicate transactions based on relevant columns
-    df = df.drop_duplicates(subset=["Transaction Date", "Value Date", "Narration", "Debit Amount", "Credit Amount"])
+    # ✅ 8. Remove duplicate transactions based on date, narration, and amount
+    df = df.drop_duplicates(subset=["Transaction Date", "Narration", "Debit Amount", "Credit Amount"], keep='first')
 
     # Debugging: Show transaction count after removing duplicates
     st.write("Transactions After Removing Duplicates:", df.shape)
