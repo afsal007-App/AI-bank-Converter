@@ -43,7 +43,6 @@ def extract_text_pdfplumber(pdf_bytes):
 def extract_transactions_horizontal(text):
     transactions = []
     lines = text.split("\n")
-
     for line in lines:
         match = transaction_pattern_horizontal.match(line)
         if match:
@@ -54,7 +53,6 @@ def extract_transactions_horizontal(text):
             credit_amount = match.group(5) or "0.00"
             running_balance = match.group(6) or "0.00"
             transactions.append([transaction_date, value_date, narration, debit_amount, credit_amount, running_balance])
-
     return transactions
 
 # Function to extract transactions using a vertical method (table-based)
@@ -68,7 +66,6 @@ def extract_transactions_vertical(pdf_bytes):
                 for row in table:
                     if len(row) >= 6:
                         transactions.append(row)
-
     return transactions
 
 # Function to process multiple PDFs
@@ -76,7 +73,6 @@ def process(pdf_files):
     st.info("Processing Emirates Islamic Bank statement...")
 
     all_transactions = []
-
     for pdf_file in pdf_files:
         text_pypdf2 = extract_text_pypdf2(pdf_file)
         text_pymupdf = extract_text_pymupdf(pdf_file)
@@ -95,7 +91,7 @@ def process(pdf_files):
     df = pd.DataFrame(all_transactions, columns=columns)
 
     # Debugging: Show transaction count before filtering
-    st.write("📊 Transactions Before Cleaning:", df.shape)
+    st.write("\ud83d\udcca Transactions Before Cleaning:", df.shape)
 
     # ✅ 1. Standardize all values to string & strip whitespace
     df = df.astype(str).apply(lambda x: x.str.strip())
@@ -119,8 +115,19 @@ def process(pdf_files):
     # ✅ 7. Sort transactions
     df = df.sort_values(by="Transaction Date", ascending=True)
 
-    # Debugging: Show transaction count after filtering
-    st.write("📊 Transactions After Cleaning:", df.shape)
+    # ✅ 8. Normalize text columns to prevent minor variations causing duplicates
+    df["Narration"] = df["Narration"].str.lower().str.strip()
+
+    # ✅ 9. Convert amount fields to numeric (removing commas)
+    df["Debit Amount"] = df["Debit Amount"].str.replace(",", "").astype(float)
+    df["Credit Amount"] = df["Credit Amount"].str.replace(",", "").astype(float)
+    df["Running Balance"] = df["Running Balance"].str.replace(",", "").astype(float)
+
+    # ✅ 10. Remove duplicate transactions based on relevant columns
+    df = df.drop_duplicates(subset=["Transaction Date", "Value Date", "Narration", "Debit Amount", "Credit Amount"])
+
+    # Debugging: Show transaction count after removing duplicates
+    st.write("\ud83d\udcca Transactions After Removing Duplicates:", df.shape)
 
     if df.empty:
         st.warning("⚠️ No valid transactions found after filtering. Please check if the correct PDF is uploaded.")
