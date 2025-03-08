@@ -119,11 +119,8 @@ def process(pdf_files):
     # ✅ 7. Sort transactions
     df = df.sort_values(by="Transaction Date", ascending=True)
 
-    # ✅ 8. Remove duplicate transactions based on date, narration, and amount
-    df = df.drop_duplicates(subset=["Transaction Date", "Narration", "Debit Amount", "Credit Amount"], keep='first')
-
-    # Debugging: Show transaction count after removing duplicates
-    st.write("📊 Transactions After Removing Duplicates:", df.shape)
+    # Debugging: Show transaction count after filtering
+    st.write("📊 Transactions After Cleaning:", df.shape)
 
     if df.empty:
         st.warning("⚠️ No valid transactions found after filtering. Please check if the correct PDF is uploaded.")
