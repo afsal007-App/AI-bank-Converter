@@ -91,7 +91,7 @@ def process(pdf_files):
     df = pd.DataFrame(all_transactions, columns=columns)
 
     # Debugging: Show transaction count before filtering
-    st.write("\ud83d\udcca Transactions Before Cleaning:", df.shape)
+    st.write("Transactions Before Cleaning:", df.shape)
 
     # ✅ 1. Standardize all values to string & strip whitespace
     df = df.astype(str).apply(lambda x: x.str.strip())
@@ -127,7 +127,7 @@ def process(pdf_files):
     df = df.drop_duplicates(subset=["Transaction Date", "Value Date", "Narration", "Debit Amount", "Credit Amount"])
 
     # Debugging: Show transaction count after removing duplicates
-    st.write("\ud83d\udcca Transactions After Removing Duplicates:", df.shape)
+    st.write("Transactions After Removing Duplicates:", df.shape)
 
     if df.empty:
         st.warning("⚠️ No valid transactions found after filtering. Please check if the correct PDF is uploaded.")
