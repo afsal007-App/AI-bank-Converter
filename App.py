@@ -10,75 +10,45 @@ sys.path.append(os.path.dirname(__file__))
 
 # Define available banks and their corresponding Python files
 BANK_OPTIONS = {
-    "Emirates Islamic Bank": {"module": "emirates_islamic_bank", "requires_opening_balance": False},
-    "Al Jazira Bank": {"module": "al_jazira_bank", "requires_opening_balance": False},
-    "FAB Bank": {"module": "fab_bank", "requires_opening_balance": True}  # ✅ FAB Bank supports opening balance
+    "Emirates Islamic Bank": "emirates_islamic_bank",
+    "Al Jazira Bank": "al_jazira_bank",
+    "FAB Bank": "fab_bank"
 }
 
-st.title("🏦 Bank Statement PDF Converter")
+st.title("Bank Statement PDF Converter")
 
 # Bank Selection
-selected_bank = st.selectbox("📌 Select Your Bank", list(BANK_OPTIONS.keys()))
-
-# Check if the selected bank requires an opening balance
-requires_opening_balance = BANK_OPTIONS[selected_bank]["requires_opening_balance"]
+selected_bank = st.selectbox("Select Your Bank", list(BANK_OPTIONS.keys()))
 
 # Upload PDF Files
-uploaded_files = st.file_uploader(
-    "📂 Upload Bank PDF Statements", type=["pdf"], accept_multiple_files=True
-)
-
-# Show opening balance input only if the bank requires it
-opening_balance = None
-if requires_opening_balance:
-    opening_balance_input = st.text_input("💰 Enter Opening Balance (Leave blank to auto-detect)")
-    if opening_balance_input:
-        try:
-            opening_balance = float(opening_balance_input)
-        except ValueError:
-            st.warning("⚠️ Please enter a valid number for the opening balance.")
+uploaded_files = st.file_uploader("Upload Bank PDF Statements", type=["pdf"], accept_multiple_files=True)
 
 if uploaded_files:
-    pdf_paths = [io.BytesIO(file.getvalue()) for file in uploaded_files]  # Convert uploaded files to BytesIO
-
-    module_name = BANK_OPTIONS[selected_bank]["module"]
-
+    pdf_paths = [io.BytesIO(file.getvalue()) for file in uploaded_files]
+    module_name = BANK_OPTIONS[selected_bank]
     try:
-        # Import the corresponding bank processing module dynamically
         bank_module = importlib.import_module(module_name)
-
-        if not hasattr(bank_module, "process"):
-            st.error(f"❌ The script {module_name}.py must contain a function `process(pdf_files, opening_balance=None)`.")
+        with st.spinner("Processing PDFs..."):
+            df_final = bank_module.process(pdf_paths)
+        if not df_final.empty:
+            # Sort by 'Transaction Date'
+            df_final['Transaction Date'] = pd.to_datetime(df_final['Transaction Date'], format='%d-%m-%Y')
+            df_final = df_final.sort_values('Transaction Date')
+            df_final['Transaction Date'] = df_final['Transaction Date'].dt.strftime('%d-%m-%Y')
+            st.write("### Extracted Transactions")
+            st.dataframe(df_final)
+            # Allow CSV Download
+            st.download_button(
+                label="Download Extracted Transactions",
+                data=df_final.to_csv(index=False).encode("utf-8"),
+                file_name=f"{selected_bank.replace(' ', '_')}_Transactions.csv",
+                mime="text/csv"
+            )
         else:
-            with st.spinner(f"⏳ Processing PDFs for {selected_bank}..."):
-                df_final = bank_module.process(pdf_paths, opening_balance)  # ✅ Always pass opening_balance
-
-            if not df_final.empty:
-                # Identify possible date columns dynamically
-                possible_date_cols = ["Transaction Date", "DATE", "Value Date", "VALUE DATE"]
-                date_col = next((col for col in df_final.columns if col in possible_date_cols), None)
-
-                # ✅ Correct Date Parsing
-                if date_col:
-                    df_final[date_col] = pd.to_datetime(df_final[date_col], errors="coerce", dayfirst=True)
-                    df_final = df_final.sort_values(by=date_col).reset_index(drop=True)
-                    df_final[date_col] = df_final[date_col].dt.strftime("%d-%m-%Y")  # Convert to "dd-mm-yyyy"
-
-                st.write(f"### 📊 Extracted Transactions for {selected_bank}")
-                st.dataframe(df_final)
-
-                # Allow CSV Download
-                csv_data = df_final.to_csv(index=False).encode("utf-8")
-                st.download_button(
-                    label="📥 Download Extracted Transactions",
-                    data=csv_data,
-                    file_name=f"{selected_bank.replace(' ', '_')}_Transactions.csv",
-                    mime="text/csv",
-                )
-            else:
-                st.warning("⚠️ No transactions found in the uploaded PDFs.")
-
+            st.write("No transactions found in the uploaded PDFs.")
     except ModuleNotFoundError:
-        st.error(f"❌ Processing script for **{selected_bank}** not found.")
+        st.error(f"Processing script for {selected_bank} not found.")
+    except AttributeError:
+        st.error(f"The script {module_name}.py must contain a function `process(pdf_files)`.")
     except Exception as e:
-        st.error(f"🚨 An error occurred while processing: {str(e)}")
+        st.error(f"An error occurred: {e}")
