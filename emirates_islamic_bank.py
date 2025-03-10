@@ -6,7 +6,7 @@ import io
 header_keywords = ["Transaction Date", "Narration", "Debit", "Credit", "Running Balance"]
 
 # Function to process a list of PDF files
-def process(pdf_files):
+def process(pdf_files, opening_balance=None):  # ✅ Accepts opening_balance as an argument
     all_transactions = []
 
     # Process each uploaded PDF file
@@ -97,6 +97,20 @@ def process(pdf_files):
 
     # Sort transactions by date (oldest first)
     df_final = df_final.sort_values(by="Transaction Date", ascending=True)
+
+    # **Handle Opening Balance Logic**
+    if opening_balance is None:
+        opening_balance = df_final["Account Balance"].iloc[0] if not df_final.empty else 0  # ✅ Uses user-provided balance or first balance
+
+    # Convert "Account Balance" to numeric
+    df_final["Account Balance"] = pd.to_numeric(df_final["Account Balance"], errors="coerce")
+
+    # Calculate Running Balance
+    df_final["Running Balance"] = df_final["Account Balance"].fillna(method='ffill')
+
+    # Calculate Actual Amount
+    df_final["Actual Amount"] = df_final["Running Balance"].diff()
+    df_final["Actual Amount"].iloc[0] = df_final["Running Balance"].iloc[0] - opening_balance  # ✅ Adjusts based on opening balance
 
     # Remove duplicate rows based on the "Account Balance" column, keeping only the first occurrence
     df_final = df_final.drop_duplicates(subset=["Account Balance"], keep="first")
