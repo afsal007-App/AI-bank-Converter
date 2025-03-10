@@ -47,12 +47,11 @@ if uploaded_files:
         # Import the corresponding bank processing module dynamically
         bank_module = importlib.import_module(module_name)
 
-        # Ensure the module has a function named `process`
         if not hasattr(bank_module, "process"):
-            st.error(f"❌ The script {module_name}.py must contain a function `process(pdf_files, opening_balance)`.")
+            st.error(f"❌ The script {module_name}.py must contain a function `process(pdf_files, opening_balance=None)`.")
         else:
             with st.spinner(f"⏳ Processing PDFs for {selected_bank}..."):
-                df_final = bank_module.process(pdf_paths, opening_balance)  # Pass opening balance if applicable
+                df_final = bank_module.process(pdf_paths, opening_balance)  # ✅ Always pass opening_balance
 
             if not df_final.empty:
                 # Identify possible date columns dynamically
