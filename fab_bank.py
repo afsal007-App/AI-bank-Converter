@@ -119,4 +119,7 @@ def process(pdf_files):
     df_final["ACTUAL AMOUNT"] = df_final["RUNNING BALANCE"].diff()
     df_final["ACTUAL AMOUNT"].iloc[0] = df_final["BALANCE"].iloc[0] - opening_balance  # First row adjustment
 
+    # **Rename "DATE" to "Transaction Date" before returning**
+    df_final.rename(columns={"DATE": "Transaction Date"}, inplace=True)
+
     return df_final  # Return processed transactions as DataFrame
