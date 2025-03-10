@@ -3,22 +3,21 @@ import pandas as pd
 from PyPDF2 import PdfReader
 import io
 
-def process(pdf_files):
+def process(pdf_files, opening_balance=None):  # ✅ Now accepts opening_balance
     """
     Extracts transactions from FAB Bank statements, cleans the data, and returns a structured DataFrame.
 
     Args:
         pdf_files (list): List of BytesIO PDF files.
+        opening_balance (float, optional): User-defined opening balance. If None, the first transaction balance is used.
 
     Returns:
         pd.DataFrame: Processed transaction data.
     """
 
     structured_transactions = []
-
-    # Patterns for extracting dates and amounts
-    date_pattern = r"\d{2} \w{3} \d{4}"  # Detects valid dates (e.g., 02 JAN 2024)
-    amount_pattern = r"\d{1,3}(?:,\d{3})*\.\d{2}"  # Detects amounts (e.g., 1,000.00)
+    date_pattern = r"\d{2} \w{3} \d{4}"  # Format: 02 JAN 2024
+    amount_pattern = r"\d{1,3}(?:,\d{3})*\.\d{2}"  # Format: 1,000.00
 
     # Unwanted phrases (headers, footers, and bank disclaimers to remove)
     unwanted_phrases = [
@@ -32,7 +31,6 @@ def process(pdf_files):
         "currency aed iban",
     ]
 
-    # Process each uploaded PDF
     for pdf_file in pdf_files:
         pdf_reader = PdfReader(pdf_file)
         pypdf2_text = "\n".join([page.extract_text() for page in pdf_reader.pages if page.extract_text()])
@@ -42,29 +40,23 @@ def process(pdf_files):
 
         for line in pypdf2_lines:
             line = line.strip()
-
-            # Detect dates (First date -> DATE, Next date -> VALUE DATE)
             dates = re.findall(date_pattern, line)
 
-            if len(dates) == 2:  # If two dates are found, it's a new transaction
-                if current_transaction["DATE"]:  # Save previous transaction
+            if len(dates) == 2:
+                if current_transaction["DATE"]:
                     structured_transactions.append(current_transaction.copy())
 
-                # Start a new transaction
                 current_transaction = {
                     "DATE": dates[0],
                     "VALUE DATE": dates[1],
                     "DESCRIPTION": line,
                 }
-
-            else:  # Merge remaining text into description
+            else:
                 current_transaction["DESCRIPTION"] += " " + line
 
-        # Save the last transaction
         if current_transaction["DATE"]:
             structured_transactions.append(current_transaction)
 
-    # Convert extracted transactions to DataFrame
     df_final = pd.DataFrame(structured_transactions)
 
     if df_final.empty:
@@ -110,16 +102,17 @@ def process(pdf_files):
     df_final = df_final[~df_final["DESCRIPTION"].str.contains("old account number", case=False, na=False)]
 
     # **Determine Opening Balance**
-    opening_balance = df_final["BALANCE"].iloc[0] if not df_final.empty else 0
+    if opening_balance is None:
+        opening_balance = df_final["BALANCE"].iloc[0] if not df_final.empty else 0  # ✅ Uses user-provided balance or first balance
 
     # Calculate Running Balance
     df_final["RUNNING BALANCE"] = df_final["BALANCE"].fillna(method='ffill')
 
     # Calculate Actual Amount
     df_final["ACTUAL AMOUNT"] = df_final["RUNNING BALANCE"].diff()
-    df_final["ACTUAL AMOUNT"].iloc[0] = df_final["BALANCE"].iloc[0] - opening_balance  # First row adjustment
+    df_final["ACTUAL AMOUNT"].iloc[0] = df_final["BALANCE"].iloc[0] - opening_balance  # ✅ Adjusts based on opening balance
 
     # **Rename "DATE" to "Transaction Date" before returning**
     df_final.rename(columns={"DATE": "Transaction Date"}, inplace=True)
 
-    return df_final  # Return processed transactions as DataFrame
+    return df_final  # ✅ Returns processed transactions as DataFrame
