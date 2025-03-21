@@ -2,6 +2,7 @@ import re
 import pandas as pd
 from PyPDF2 import PdfReader
 import io
+import streamlit as st
 
 def process(pdf_files, opening_balance=None):  # ✅ Now accepts opening_balance
     """
@@ -116,3 +117,29 @@ def process(pdf_files, opening_balance=None):  # ✅ Now accepts opening_balance
     df_final.rename(columns={"DATE": "Transaction Date"}, inplace=True)
 
     return df_final  # ✅ Returns processed transactions as DataFrame
+
+
+def run():
+    st.header("FAB Bank PDF Processor")
+
+    uploaded_files = st.file_uploader("Upload one or more FAB Bank PDF statements", type="pdf", accept_multiple_files=True)
+    opening_balance_input = st.text_input("Optional: Enter Opening Balance (leave blank to auto-calculate)")
+
+    if uploaded_files:
+        try:
+            opening_balance = float(opening_balance_input) if opening_balance_input.strip() else None
+        except ValueError:
+            st.error("Invalid opening balance. Please enter a numeric value.")
+            return
+
+        st.info("Processing uploaded file(s)...")
+        df = process(uploaded_files, opening_balance)
+
+        if df.empty:
+            st.warning("No transactions found in the uploaded PDF(s).")
+        else:
+            st.success("Transactions extracted successfully!")
+            st.dataframe(df)
+
+            csv = df.to_csv(index=False).encode("utf-8")
+            st.download_button("Download CSV", csv, "fab_bank_transactions.csv", "text/csv")
