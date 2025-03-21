@@ -34,7 +34,7 @@ st.markdown(
         background: linear-gradient(to right, #fdfbfb, #ebedee);
     }
     .title-text {
-        font-size: 3rem;
+        font-size: 2rem;
         font-weight: 400;
         background: -webkit-linear-gradient(45deg, #1e90ff, #00c9a7);
         -webkit-background-clip: text;
