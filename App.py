@@ -2,7 +2,7 @@ import streamlit as st
 
 # Import individual bank modules
 import Rak_Bank  # replace with actual filenames, no .py
-import al_jazira  # another example
+import al_jazira_bank  # another example
 import emirates_islamic_bank  # another example
 import fab_bank  # another example
 
