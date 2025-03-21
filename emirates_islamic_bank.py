@@ -1,6 +1,7 @@
 import pdfplumber
 import pandas as pd
 import io
+import streamlit as st
 
 # Keywords that indicate unwanted header rows (to be removed)
 header_keywords = ["Transaction Date", "Narration", "Debit", "Credit", "Running Balance"]
@@ -97,6 +98,26 @@ def process(pdf_files):
 
     # Sort transactions by date (oldest first)
     df_final = df_final.sort_values(by="Transaction Date", ascending=True)
+
+
+def run():
+    st.header("Emirates Islamic Bank PDF Processor")
+
+    uploaded_files = st.file_uploader("Upload Emirates Islamic Bank statement PDFs", type="pdf", accept_multiple_files=True)
+
+    if uploaded_files:
+        st.info("Processing uploaded files...")
+        df = process(uploaded_files)
+
+        if df.empty:
+            st.warning("No transactions found.")
+        else:
+            st.success("Transactions extracted successfully!")
+            st.dataframe(df)
+
+            csv = df.to_csv(index=False).encode("utf-8")
+            st.download_button("Download CSV", csv, "emirates_islamic_transactions.csv", "text/csv")
+
 
     # Remove duplicate rows based on the "Account Balance" column, keeping only the first occurrence
     df_final = df_final.drop_duplicates(subset=["Account Balance"], keep="first")
