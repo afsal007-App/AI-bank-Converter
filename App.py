@@ -2,12 +2,16 @@ import streamlit as st
 
 # Import individual bank modules
 import Rak_Bank  # replace with actual filenames, no .py
-import bank_abc  # another example
+import al_jazira  # another example
+import emirates_islamic_bank  # another example
+import fab_bank  # another example
 
 # Map for dropdown
 bank_modules = {
-    "Rak bank": Rak_Bank,
-    "Bank ABC": bank_abc,
+    "RAK bank": Rak_Bank,
+    "AL JAZIRA Bank": al_jazira_bank,
+    "EMIRATES ISLAMIC BANK": emirates_islamic_bank,
+    "FAB BANK": fab_bank,
     # Add more banks here
 }
 
