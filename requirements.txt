@@ -4,3 +4,4 @@ pdfplumber
 pandas
 pdf2image
 pytesseract
+streamlit-lottie
