@@ -86,7 +86,7 @@ def process_pdf(pdf_file, filename="uploaded_file.pdf"):
 
     return transactions
 
-def run_bank_xyz():
+def run():
     st.subheader("Upload PDFs for Bank XYZ")
     uploaded_files = st.file_uploader("Upload one or more PDF files", type="pdf", accept_multiple_files=True)
 
