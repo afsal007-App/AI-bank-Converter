@@ -1,25 +1,26 @@
 import streamlit as st
 
-# Import individual bank modules
-import Rak_Bank  # replace with actual filenames, no .py
-import al_jazira_bank  # another example
-import emirates_islamic_bank  # another example
-import fab_bank  # another example
+# Import each individual bank module
+import Rak_Bank
+import al_jazira_bank
+import emirates_islamic_bank
+import fab_bank
 
-# Map for dropdown
+# Mapping between dropdown label and corresponding module
 bank_modules = {
-    "RAK bank": Rak_Bank,
-    "AL JAZIRA Bank": al_jazira_bank,
-    "EMIRATES ISLAMIC BANK": emirates_islamic_bank,
-    "FAB BANK": fab_bank,
-    # Add more banks here
+    "RAK Bank": Rak_Bank,
+    "Al Jazira Bank": al_jazira_bank,
+    "Emirates Islamic Bank": emirates_islamic_bank,
+    "FAB Bank": fab_bank
 }
 
-st.title("Bank Statement PDF Extractor")
+# Streamlit App Layout
+st.set_page_config(page_title="Bank PDF Converter", layout="centered")
+st.title("🏦 Bank Statement PDF Extractor")
 
-# Dropdown for selecting a bank
-selected_bank = st.selectbox("Select a Bank", list(bank_modules.keys()))
+# Dropdown to select bank
+selected_bank = st.selectbox("Select Your Bank", list(bank_modules.keys()))
 
-# Run the selected bank's function
+# Run selected bank's Streamlit function
 if selected_bank:
     bank_modules[selected_bank].run()
