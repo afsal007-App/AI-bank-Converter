@@ -17,32 +17,21 @@ def convert_arabic_indic_to_western(text):
 # 📝 Extract transactions using structural table extraction (column-wise)
 def extract_transactions_structural(pdf_bytes):
     transactions = []
-    date_pattern = r'(\d{2}/\d{2}/\d{2})'
-    amount_pattern = r'(-?\d{1,3}(?:,\d{3})*(?:\.\d{2}))'
-
-    current_transaction = None
-
     with pdfplumber.open(pdf_bytes) as pdf:
         for page in pdf.pages:
             table = page.extract_table()
             if not table:
-                continue  # Skip if no table is found
+                continue
 
             df = pd.DataFrame(table)
 
-            # Debugging: Show extracted table
-            st.write("📊 Extracted Table Data:", df.head())
-
-            # Define column names based on PDF structure
+            # Set expected column names (adjust if needed)
             df.columns = ["Transaction Date", "Value Date", "Description", "Withdrawal (Dr)", "Deposit (Cr)", "Running Balance"]
-
-            # Drop empty or invalid rows
             df = df.dropna(subset=["Transaction Date", "Description"]).reset_index(drop=True)
 
-            # Convert Arabic-Indic numerals to Western numbers
+            # Convert Arabic-Indic numerals to Western
             df = df.applymap(lambda x: convert_arabic_indic_to_western(str(x)) if pd.notnull(x) else x)
 
-            # Extract each transaction
             for _, row in df.iterrows():
                 transaction = {
                     "Transaction Date": row["Transaction Date"],
@@ -56,9 +45,9 @@ def extract_transactions_structural(pdf_bytes):
 
     return pd.DataFrame(transactions)
 
-# ✅ Streamlit Function for Structural Extraction
+# ✅ Processing multiple PDFs
 def process(pdf_files):
-    st.info("Extracting transactions from Aljazira bank statement using table-based extraction...")
+    st.info("Extracting transactions from Aljazira Bank statements...")
 
     all_transactions = []
 
@@ -71,5 +60,26 @@ def process(pdf_files):
         final_df = pd.concat(all_transactions, ignore_index=True)
         return final_df
     else:
-        st.warning("⚠️ No structured transactions found in the uploaded PDF.")
         return pd.DataFrame()
+
+# ✅ Required run() function for Streamlit
+def run():
+    st.header("Al Jazira Bank PDF Processor")
+
+    uploaded_files = st.file_uploader(
+        "Upload Al Jazira Bank PDF statements",
+        type="pdf",
+        accept_multiple_files=True
+    )
+
+    if uploaded_files:
+        df = process(uploaded_files)
+
+        if df.empty:
+            st.warning("⚠️ No structured transactions found in the uploaded PDFs.")
+        else:
+            st.success("✅ Transactions extracted successfully!")
+            st.dataframe(df)
+
+            csv = df.to_csv(index=False).encode("utf-8")
+            st.download_button("Download CSV", csv, "al_jazira_transactions.csv", "text/csv")
