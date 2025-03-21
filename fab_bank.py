@@ -120,7 +120,7 @@ def process(pdf_files, opening_balance=None):  # ✅ Now accepts opening_balance
 
 
 def run():
-    st.header("FAB Bank PDF Processor")
+    st.header("Bank PDF Processor")
 
     uploaded_files = st.file_uploader("Upload one or more FAB Bank PDF statements", type="pdf", accept_multiple_files=True)
     opening_balance_input = st.text_input("Optional: Enter Opening Balance (leave blank to auto-calculate)")
