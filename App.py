@@ -43,7 +43,7 @@ st.markdown("""
     .dropdown-label {
         font-size: 1.2rem;
         font-weight: 600;
-        color: #886dc7;
+        color: #FED2AA;
         margin-bottom: 12px;
     }
     hr {
