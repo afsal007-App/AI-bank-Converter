@@ -82,16 +82,16 @@ def process_wio_pdfs(pdf_files):
 def run():
     st.header("Wio Bank PDF Processor")
 
-    uploaded_files = st.file_uploader("Upload Wio Bank PDF statements", type="pdf", accept_multiple_files=True)
+    uploaded_files = st.file_uploader("Upload one or more Wio Bank PDF statements", type="pdf", accept_multiple_files=True)
 
     if uploaded_files:
         st.info("Processing uploaded file(s)...")
         df = process_wio_pdfs(uploaded_files)
 
         if df.empty:
-            st.warning("⚠️ No transactions found.")
+            st.warning("⚠️ No transactions found in any uploaded files.")
         else:
-            st.success("✅ Transactions extracted successfully!")
+            st.success(f"✅ Extracted {len(df)} transactions from {len(uploaded_files)} PDF(s)")
             st.dataframe(df)
 
             csv = df.to_csv(index=False).encode("utf-8")
