@@ -7,6 +7,7 @@ import Rak_Bank
 import al_jazira_bank
 import emirates_islamic_bank
 import fab_bank
+import fab_bank
 
 # Mapping
 bank_modules = {
