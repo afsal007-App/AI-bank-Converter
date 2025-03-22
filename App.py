@@ -53,10 +53,10 @@ st.markdown("""
     }
     @keyframes glow {
         from {
-            text-shadow: 0 0 10px ##886dc7, 0 0 20px ##cdb4d4;
+            text-shadow: 0 0 05px ##886dc7, 0 0 10px ##cdb4d4;
         }
         to {
-            text-shadow: 1 0 30px #0B2F9F, 0 0 3px #98DED9;
+            text-shadow: 0 0 15px #0B2F9F, 0 0 3px #98DED9;
         }
     }
     </style>
