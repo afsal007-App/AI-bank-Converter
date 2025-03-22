@@ -7,14 +7,15 @@ import Rak_Bank
 import al_jazira_bank
 import emirates_islamic_bank
 import fab_bank
-import fab_bank
+import Wio_bank
 
 # Mapping
 bank_modules = {
     "RAK Bank 🏦": Rak_Bank,
-    "Al Jazira Bank 🏢": al_jazira_bank,
-    "Emirates Islamic Bank 🕌": emirates_islamic_bank,
-    "FAB Bank 💳": fab_bank
+    "Al Jazira Bank 🏦": al_jazira_bank,
+    "Emirates Islamic Bank 🏦": emirates_islamic_bank,
+    "FAB Bank 🏦": fab_bank
+    "WIO Bank 🏦":Wio_bank
 }
 
 # Page Setup
