@@ -30,7 +30,7 @@ st.markdown("""
         background: linear-gradient(90deg, #00dbde, #fc00ff);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        animation: glow 3s ease-in-out infinite alternate;
+        animation: glow 2s ease-in-out infinite alternate;
     }
     .subtext {
         text-align: center;
@@ -53,7 +53,7 @@ st.markdown("""
     }
     @keyframes glow {
         from {
-            text-shadow: 0 0 05px #00dbde, 0 0 10px #00dbde;
+            text-shadow: 0 0 05px #886dc7, 0 0 10px #00dbde;
         }
         to {
             text-shadow: 0 0 10px #fc00ff, 0 0 20px #fc00ff;
