@@ -39,21 +39,7 @@ st.markdown("""
         margin-top: -10px;
         margin-bottom: 30px;
     }
-    .glass-card {
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 20px;
-        padding: 30px;
-        margin-top: 30px;
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        transition: transform 0.3s ease;
-    }
-    .glass-card:hover {
-        transform: scale(1.02);
-        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
-    }
+    
     .dropdown-label {
         font-size: 1.2rem;
         font-weight: 600;
