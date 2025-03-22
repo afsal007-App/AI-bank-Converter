@@ -18,19 +18,19 @@ bank_modules = {
     "WIO Bank 🧾": Wio_bank
 }
 
-# Load Lottie animation (optional)
+# Load Lottie animation
 def load_lottie_url(url):
     r = requests.get(url)
     if r.status_code != 200:
         return None
     return r.json()
 
-lottie_icon = load_lottie_url("https://assets2.lottiefiles.com/packages/lf20_fcfjwiyb.json")  # Bank icon
+lottie_icon = load_lottie_url("https://assets2.lottiefiles.com/packages/lf20_fcfjwiyb.json")  # Bank icon animation
 
 # Page Setup
 st.set_page_config(page_title="Bank PDF Extractor", layout="centered")
 
-# --- Styling ---
+# --- Custom Styling ---
 st.markdown("""
     <style>
     .title {
@@ -49,28 +49,37 @@ st.markdown("""
         margin-top: -15px;
         margin-bottom: 30px;
     }
-    .dropdown-box {
-        background-color: #f2f7ff;
-        border-radius: 15px;
-        padding: 30px 25px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        margin-bottom: 30px;
+    .styled-dropdown {
+        background-color: #f0f8ff;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        margin: 20px 0;
+        transition: 0.3s ease-in-out;
+    }
+    .styled-dropdown:hover {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+    .styled-dropdown h4 {
+        font-size: 1.2rem;
+        color: #333;
+        margin-bottom: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- Header ---
+# --- Page Header ---
 st.markdown("<div class='title'>Bank Statement PDF Extractor</div>", unsafe_allow_html=True)
-st.markdown("<div class='subtext'>Convert your bank PDFs into clean, usable data 📄 ➡️ 📊</div>", unsafe_allow_html=True)
+st.markdown("<div class='subtext'>Convert your bank PDFs into clean, structured data 📄 ➡️ 📊</div>", unsafe_allow_html=True)
 
 # --- Animation ---
 st_lottie(lottie_icon, height=120, key="bank_icon")
 
 # --- Styled Dropdown Section ---
-st.markdown("<div class='dropdown-box'>", unsafe_allow_html=True)
-selected_bank = st.selectbox("🔽 Choose Your Bank to Begin", list(bank_modules.keys()))
-st.markdown("</div>", unsafe_allow_html=True)
+st.markdown('<div class="styled-dropdown"><h4>🔽 Select Your Bank</h4>', unsafe_allow_html=True)
+selected_bank = st.selectbox("", list(bank_modules.keys()))
+st.markdown('</div>', unsafe_allow_html=True)
 
-# --- Launch Selected Bank Module ---
+# --- Run Selected Bank Module ---
 if selected_bank:
     bank_modules[selected_bank].run()
