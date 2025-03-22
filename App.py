@@ -14,7 +14,7 @@ bank_modules = {
     "RAK Bank 🏦": Rak_Bank,
     "Al Jazira Bank 🏦": al_jazira_bank,
     "Emirates Islamic Bank 🏦": emirates_islamic_bank,
-    "FAB Bank 🏦": fab_bank
+    "FAB Bank 🏦": fab_bank,
     "WIO Bank 🏦":Wio_bank
 }
 
