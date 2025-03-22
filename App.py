@@ -2,54 +2,116 @@ import streamlit as st
 from streamlit_lottie import st_lottie
 import requests
 
-# Bank Modules
+# ==== Bank Modules ====
 import Rak_Bank
 import al_jazira_bank
 import emirates_islamic_bank
 import fab_bank
 import Wio_bank
 
-# Mapping
+# ==== Bank Mapping ====
 bank_modules = {
-    "RAK Bank 🏦": Rak_Bank,
-    "Al Jazira Bank 🏦": al_jazira_bank,
-    "Emirates Islamic Bank 🏦": emirates_islamic_bank,
-    "FAB Bank 🏦": fab_bank,
-    "WIO Bank 🏦":Wio_bank
+    "🏦 RAK Bank": Rak_Bank,
+    "🏢 Al Jazira Bank": al_jazira_bank,
+    "🕌 Emirates Islamic Bank": emirates_islamic_bank,
+    "💳 FAB Bank": fab_bank,
+    "🧾 WIO Bank": Wio_bank
 }
 
-# Page Setup
+# ==== Load Lottie Animation ====
+def load_lottie_url(url):
+    try:
+        r = requests.get(url)
+        if r.status_code == 200:
+            return r.json()
+    except:
+        return None
+    return None
+
+lottie_icon = load_lottie_url("https://assets10.lottiefiles.com/packages/lf20_jyxd3gpv.json")
+
+# ==== Page Config ====
 st.set_page_config(page_title="Bank PDF Extractor", layout="centered")
 
-# --- Styling ---
+# ==== CSS Styling ====
 st.markdown("""
     <style>
+    body {
+        background: #0f1117;
+    }
     .title {
-        font-size: 2.5rem;
-        font-weight: 700;
+        font-size: 3rem;
+        font-weight: 900;
         text-align: center;
-        padding: 0.5em 0;
-        background: -webkit-linear-gradient(45deg, #0072ff, #00c6ff);
+        padding-top: 1rem;
+        background: linear-gradient(90deg, #00dbde, #fc00ff);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        animation: glow 3s ease-in-out infinite alternate;
     }
     .subtext {
         text-align: center;
-        font-size: 1rem;
-        color: #444;
-        margin-top: -15px;
+        font-size: 1.05rem;
+        color: #aaa;
+        margin-top: -10px;
         margin-bottom: 30px;
+    }
+    .glass-card {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 20px;
+        padding: 30px;
+        margin-top: 30px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        transition: transform 0.3s ease;
+    }
+    .glass-card:hover {
+        transform: scale(1.02);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+    }
+    .dropdown-label {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #00dbde;
+        margin-bottom: 12px;
+    }
+    hr {
+        border: none;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        margin: 40px 0;
+    }
+    @keyframes glow {
+        from {
+            text-shadow: 0 0 10px #00dbde, 0 0 20px #00dbde;
+        }
+        to {
+            text-shadow: 0 0 20px #fc00ff, 0 0 30px #fc00ff;
+        }
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- Header ---
+# ==== Header ====
 st.markdown("<div class='title'>Bank Statement PDF Extractor</div>", unsafe_allow_html=True)
 st.markdown("<div class='subtext'>Convert your bank PDFs into clean, usable data 📄 ➡️ 📊</div>", unsafe_allow_html=True)
 
-# --- Dropdown ---
-selected_bank = st.selectbox("🔽 Select Your Bank", list(bank_modules.keys()))
+# ==== Lottie Animation ====
+if lottie_icon:
+    st_lottie(lottie_icon, height=150, key="anim")
+else:
+    st.warning("⚠️ Animation failed to load.")
 
-# --- Launch ---
+# ==== Glass Dropdown Card ====
+st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+st.markdown('<div class="dropdown-label">🔽 Select Your Bank</div>', unsafe_allow_html=True)
+selected_bank = st.selectbox("", list(bank_modules.keys()))
+st.markdown('</div>', unsafe_allow_html=True)
+
+# ==== Divider ====
+st.markdown("<hr>", unsafe_allow_html=True)
+
+# ==== Launch Selected Bank Processor ====
 if selected_bank:
     bank_modules[selected_bank].run()
