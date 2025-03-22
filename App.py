@@ -9,7 +9,7 @@ import emirates_islamic_bank
 import fab_bank
 import Wio_bank
 
-# ==== Bank Mapping with Emoji Labels ====
+# ==== Bank Mapping ====
 bank_modules = {
     "🏦 RAK Bank": Rak_Bank,
     "🏢 Al Jazira Bank": al_jazira_bank,
@@ -18,22 +18,24 @@ bank_modules = {
     "🧾 WIO Bank": Wio_bank
 }
 
-# ==== Load Lottie Animation ====
+# ==== Load Lottie Animation (Safely) ====
 def load_lottie_url(url):
-    r = requests.get(url)
-    if r.status_code != 200:
-        return None
-    return r.json()
+    try:
+        r = requests.get(url)
+        if r.status_code == 200:
+            return r.json()
+    except Exception as e:
+        print("Error loading Lottie:", e)
+    return None
 
-lottie_icon = load_lottie_url("https://assets10.lottiefiles.com/packages/lf20_jyxd3gpv.json")  # Simple banking animation
+lottie_icon = load_lottie_url("https://assets10.lottiefiles.com/packages/lf20_jyxd3gpv.json")
 
-# ==== Streamlit Page Config ====
+# ==== Page Setup ====
 st.set_page_config(page_title="Bank PDF Extractor", layout="centered")
 
 # ==== Custom CSS Styling ====
 st.markdown("""
     <style>
-    /* Gradient Title */
     .title {
         font-size: 2.8rem;
         font-weight: 800;
@@ -43,7 +45,6 @@ st.markdown("""
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
-    /* Subtext under title */
     .subtext {
         text-align: center;
         font-size: 1.05rem;
@@ -51,7 +52,6 @@ st.markdown("""
         margin-top: -10px;
         margin-bottom: 30px;
     }
-    /* Glass Dropdown Container */
     .glass-card {
         background: rgba(255, 255, 255, 0.05);
         border: 1px solid rgba(255, 255, 255, 0.1);
@@ -75,19 +75,22 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ==== Page Title ====
+# ==== Header ====
 st.markdown("<div class='title'>Bank Statement PDF Extractor</div>", unsafe_allow_html=True)
 st.markdown("<div class='subtext'>Convert your bank PDFs into clean, structured data 📄 ➡️ 📊</div>", unsafe_allow_html=True)
 
-# ==== Lottie Animation ====
-st_lottie(lottie_icon, height=150, key="bank_anim")
+# ==== Animation ====
+if lottie_icon:
+    st_lottie(lottie_icon, height=150, key="bank_anim")
+else:
+    st.warning("⚠️ Animation failed to load. Please check your internet or try another animation link.")
 
-# ==== Dropdown Section in a Styled Card ====
+# ==== Styled Dropdown ====
 st.markdown('<div class="glass-card">', unsafe_allow_html=True)
 st.markdown('<div class="dropdown-label">🔽 Select Your Bank</div>', unsafe_allow_html=True)
 selected_bank = st.selectbox("", list(bank_modules.keys()))
 st.markdown('</div>', unsafe_allow_html=True)
 
-# ==== Run Selected Bank Module ====
+# ==== Launch Selected Bank Processor ====
 if selected_bank:
     bank_modules[selected_bank].run()
