@@ -2,84 +2,92 @@ import streamlit as st
 from streamlit_lottie import st_lottie
 import requests
 
-# Bank Modules
+# ==== Bank Modules ====
 import Rak_Bank
 import al_jazira_bank
 import emirates_islamic_bank
 import fab_bank
 import Wio_bank
 
-# Mapping
+# ==== Bank Mapping with Emoji Labels ====
 bank_modules = {
-    "RAK Bank 🏦": Rak_Bank,
-    "Al Jazira Bank 🏦": al_jazira_bank,
-    "Emirates Islamic Bank 🏦": emirates_islamic_bank,
-    "FAB Bank 💳": fab_bank,
-    "WIO Bank 🧾": Wio_bank
+    "🏦 RAK Bank": Rak_Bank,
+    "🏢 Al Jazira Bank": al_jazira_bank,
+    "🕌 Emirates Islamic Bank": emirates_islamic_bank,
+    "💳 FAB Bank": fab_bank,
+    "🧾 WIO Bank": Wio_bank
 }
 
-# Load Lottie animation
+# ==== Load Lottie Animation ====
 def load_lottie_url(url):
     r = requests.get(url)
     if r.status_code != 200:
         return None
     return r.json()
 
-lottie_icon = load_lottie_url("https://assets2.lottiefiles.com/packages/lf20_fcfjwiyb.json")  # Bank icon animation
+lottie_icon = load_lottie_url("https://assets10.lottiefiles.com/packages/lf20_jyxd3gpv.json")  # Simple banking animation
 
-# Page Setup
+# ==== Streamlit Page Config ====
 st.set_page_config(page_title="Bank PDF Extractor", layout="centered")
 
-# --- Custom Styling ---
+# ==== Custom CSS Styling ====
 st.markdown("""
     <style>
+    /* Gradient Title */
     .title {
-        font-size: 2.5rem;
-        font-weight: 700;
+        font-size: 2.8rem;
+        font-weight: 800;
         text-align: center;
         padding: 0.5em 0;
-        background: -webkit-linear-gradient(45deg, #0072ff, #00c6ff);
+        background: linear-gradient(90deg, #00c6ff, #0072ff);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
+    /* Subtext under title */
     .subtext {
         text-align: center;
-        font-size: 1rem;
-        color: #444;
-        margin-top: -15px;
+        font-size: 1.05rem;
+        color: #ccc;
+        margin-top: -10px;
         margin-bottom: 30px;
     }
-    .styled-dropdown {
-        background-color: #f0f8ff;
-        padding: 25px;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        margin: 20px 0;
-        transition: 0.3s ease-in-out;
+    /* Glass Dropdown Container */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        padding: 30px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        transition: all 0.3s ease-in-out;
+        margin-top: 30px;
     }
-    .styled-dropdown:hover {
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    .glass-card:hover {
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
     }
-    .styled-dropdown h4 {
+    .dropdown-label {
         font-size: 1.2rem;
-        color: #333;
-        margin-bottom: 10px;
+        font-weight: 600;
+        color: #00c6ff;
+        margin-bottom: 12px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- Page Header ---
+# ==== Page Title ====
 st.markdown("<div class='title'>Bank Statement PDF Extractor</div>", unsafe_allow_html=True)
 st.markdown("<div class='subtext'>Convert your bank PDFs into clean, structured data 📄 ➡️ 📊</div>", unsafe_allow_html=True)
 
-# --- Animation ---
-st_lottie(lottie_icon, height=120, key="bank_icon")
+# ==== Lottie Animation ====
+st_lottie(lottie_icon, height=150, key="bank_anim")
 
-# --- Styled Dropdown Section ---
-st.markdown('<div class="styled-dropdown"><h4>🔽 Select Your Bank</h4>', unsafe_allow_html=True)
+# ==== Dropdown Section in a Styled Card ====
+st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+st.markdown('<div class="dropdown-label">🔽 Select Your Bank</div>', unsafe_allow_html=True)
 selected_bank = st.selectbox("", list(bank_modules.keys()))
 st.markdown('</div>', unsafe_allow_html=True)
 
-# --- Run Selected Bank Module ---
+# ==== Run Selected Bank Module ====
 if selected_bank:
     bank_modules[selected_bank].run()
