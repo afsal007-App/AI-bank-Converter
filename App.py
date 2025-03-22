@@ -56,7 +56,7 @@ st.markdown("""
             text-shadow: 0 0 10px ##886dc7, 0 0 20px ##cdb4d4;
         }
         to {
-            text-shadow: 0 0 30px #0B2F9F, 0 0 3px #98DED9;
+            text-shadow: 1 0 30px #0B2F9F, 0 0 3px #98DED9;
         }
     }
     </style>
