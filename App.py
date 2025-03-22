@@ -68,7 +68,7 @@ st.markdown("<div class='subtext'>Convert your bank PDFs into clean, usable data
 
 # ==== Glass Dropdown Section ====
 st.markdown('<div class="glass-card">', unsafe_allow_html=True)
-st.markdown('<div class="dropdown-label">🔽 Select Your Bank</div>', unsafe_allow_html=True)
+st.markdown('<div class="dropdown-label"> Select Your Bank</div>', unsafe_allow_html=True)
 selected_bank = st.selectbox("", list(bank_modules.keys()))
 st.markdown('</div>', unsafe_allow_html=True)
 
