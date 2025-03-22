@@ -1,145 +1,136 @@
+import streamlit as st
+import PyPDF2
 import re
 import pandas as pd
-from PyPDF2 import PdfReader
-import io
-import streamlit as st
+from io import BytesIO
 
-def process(pdf_files, opening_balance=None):  # ✅ Now accepts opening_balance
-    """
-    Extracts transactions from FAB Bank statements, cleans the data, and returns a structured DataFrame.
-
-    Args:
-        pdf_files (list): List of BytesIO PDF files.
-        opening_balance (float, optional): User-defined opening balance. If None, the first transaction balance is used.
-
-    Returns:
-        pd.DataFrame: Processed transaction data.
-    """
-
-    structured_transactions = []
-    date_pattern = r"\d{2} \w{3} \d{4}"  # Format: 02 JAN 2024
-    amount_pattern = r"\d{1,3}(?:,\d{3})*\.\d{2}"  # Format: 1,000.00
-
-    # Unwanted phrases (headers, footers, and bank disclaimers to remove)
+# Step 1: Extract cleaned lines
+def extract_clean_lines(pdf_file):
     unwanted_phrases = [
-        "balance carried forward",
-        "date value date description debit credit balance",
-        "important: the bank must be notified",
-        "absence of any notification",
-        "account statement",
-        "first abu dhabi bank",
-        "we shall endeavor to get back",
-        "currency aed iban",
+        "Important:", "*T&Cs Apply", "600  52  5500", "First Abu Dhabi Bank PJSC",
+        "We shall endeavor", "KHALID MOHAMED OBAID", "P.O.BOX 35566",
+        "United Arab EmiratesAC-NUM", "IBAN", "Old Account Number",
+        "Account Statement FROM", "Sheet no", "Balance brought forward"
     ]
+    lines = []
+    reader = PyPDF2.PdfReader(pdf_file)
+    for page in reader.pages:
+        page_text = page.extract_text()
+        if page_text:
+            for line in page_text.splitlines():
+                if not any(phrase in line for phrase in unwanted_phrases):
+                    clean = re.sub(r'\s+', ' ', line.strip())
+                    if clean:
+                        lines.append(clean)
+    return lines
 
-    for pdf_file in pdf_files:
-        pdf_reader = PdfReader(pdf_file)
-        pypdf2_text = "\n".join([page.extract_text() for page in pdf_reader.pages if page.extract_text()])
-        pypdf2_lines = pypdf2_text.split("\n")
+# Step 2: Check if line is start of transaction
+def is_transaction_start(line):
+    return re.match(r"^\d{1,2} \w{3} \d{4}\s+\d{1,2} \w{3} \d{4}", line) is not None
 
-        current_transaction = {"DATE": "", "VALUE DATE": "", "DESCRIPTION": ""}
+# Step 3: Group lines into transactions
+def group_transactions(lines):
+    transactions = []
+    current = []
+    for line in lines:
+        if is_transaction_start(line):
+            if current:
+                transactions.append(current)
+                current = []
+        current.append(line)
+    if current:
+        transactions.append(current)
+    return transactions
 
-        for line in pypdf2_lines:
-            line = line.strip()
-            dates = re.findall(date_pattern, line)
+# Step 4: Extract date & description
+def extract_date_and_description(block):
+    first_line = block[0]
+    match = re.match(r"^(\d{1,2} \w{3} \d{4})\s+(\d{1,2} \w{3} \d{4})\s+(.*)", first_line)
+    if match:
+        date = match.group(1)
+        value_date = match.group(2)
+        desc = match.group(3)
+    else:
+        date_matches = re.findall(r"\d{1,2} \w{3} \d{4}", first_line)
+        if len(date_matches) >= 2:
+            date = date_matches[0]
+            value_date = date_matches[1]
+            start = first_line.find(value_date) + len(value_date)
+            desc = first_line[start:].strip()
+        else:
+            date = value_date = ""
+            desc = first_line
 
-            if len(dates) == 2:
-                if current_transaction["DATE"]:
-                    structured_transactions.append(current_transaction.copy())
+    full_description = desc + " " + " ".join(block[1:])
+    return {
+        "Date": date,
+        "Value Date": value_date,
+        "Description": full_description.strip()
+    }
 
-                current_transaction = {
-                    "DATE": dates[0],
-                    "VALUE DATE": dates[1],
-                    "DESCRIPTION": line,
-                }
-            else:
-                current_transaction["DESCRIPTION"] += " " + line
+# Step 5: Extract amount & balance
+def extract_amount_balance_from_description(description):
+    matches = re.findall(r'(?<!\d)(-?\d{1,3}(?:,\d{3})*\.\d{2})(?!\s*%)', description)
+    if len(matches) >= 2:
+        amount = matches[0].replace(',', '')
+        balance = matches[1].replace(',', '')
+    elif len(matches) == 1:
+        amount = matches[0].replace(',', '')
+        balance = ''
+    else:
+        amount = balance = ''
+    return pd.Series([amount, balance])
 
-        if current_transaction["DATE"]:
-            structured_transactions.append(current_transaction)
+# Step 6: Process single PDF
+def process_pdf(pdf_file, filename="uploaded.pdf"):
+    lines = extract_clean_lines(pdf_file)
+    blocks = group_transactions(lines)
+    data = [extract_date_and_description(block) for block in blocks]
+    df = pd.DataFrame(data)
+    df['Source File'] = filename
 
-    df_final = pd.DataFrame(structured_transactions)
+    # Filter out unwanted header-like rows
+    df['Description_clean'] = df['Description'].str.replace(r'\s+', ' ', regex=True).str.strip().str.lower()
+    df = df[~df['Description_clean'].str.contains("date value date description debit credit balance")]
+    df.drop(columns=['Description_clean'], inplace=True)
 
-    if df_final.empty:
-        return df_final  # Return empty DataFrame if no transactions were found
+    df[['Amount', 'Balance']] = df['Description'].apply(extract_amount_balance_from_description)
+    return df
 
-    # Function to clean description
-    def clean_description(text):
-        return re.sub(r"\s+", " ", text).strip()
-
-    # Function to remove unwanted headers, footers, and extra information
-    def remove_unwanted_text(text):
-        text = text.lower()
-        for phrase in unwanted_phrases:
-            if phrase in text:
-                return ""
-        return text
-
-    # Function to remove transaction dates from DESCRIPTION column
-    def remove_dates_from_description(text):
-        return re.sub(date_pattern, "", text).strip()
-
-    # Function to extract amount and balance
-    def extract_amounts(text):
-        amounts = re.findall(amount_pattern, text)
-        if len(amounts) >= 2:
-            return amounts[0].replace(",", ""), amounts[1].replace(",", "")
-        return "", ""
-
-    # Apply cleaning functions
-    df_final["DESCRIPTION"] = df_final["DESCRIPTION"].apply(clean_description)
-    df_final["DESCRIPTION"] = df_final["DESCRIPTION"].apply(remove_unwanted_text)
-    df_final["DESCRIPTION"] = df_final["DESCRIPTION"].apply(remove_dates_from_description)
-    df_final = df_final[df_final["DESCRIPTION"] != ""]  # Remove empty descriptions
-
-    # Extract Amount and Balance
-    df_final[["AMOUNT", "BALANCE"]] = df_final["DESCRIPTION"].apply(lambda x: pd.Series(extract_amounts(x)))
-
-    # Convert to numeric
-    df_final["AMOUNT"] = pd.to_numeric(df_final["AMOUNT"], errors="coerce")
-    df_final["BALANCE"] = pd.to_numeric(df_final["BALANCE"], errors="coerce")
-
-    # Remove rows with "Old Account Number"
-    df_final = df_final[~df_final["DESCRIPTION"].str.contains("old account number", case=False, na=False)]
-
-    # **Determine Opening Balance**
-    if opening_balance is None:
-        opening_balance = df_final["BALANCE"].iloc[0] if not df_final.empty else 0  # ✅ Uses user-provided balance or first balance
-
-    # Calculate Running Balance
-    df_final["RUNNING BALANCE"] = df_final["BALANCE"].fillna(method='ffill')
-
-    # Calculate Actual Amount
-    df_final["ACTUAL AMOUNT"] = df_final["RUNNING BALANCE"].diff()
-    df_final["ACTUAL AMOUNT"].iloc[0] = df_final["BALANCE"].iloc[0] - opening_balance  # ✅ Adjusts based on opening balance
-
-    # **Rename "DATE" to "Transaction Date" before returning**
-    df_final.rename(columns={"DATE": "Transaction Date"}, inplace=True)
-
-    return df_final  # ✅ Returns processed transactions as DataFrame
-
-
+# Step 7: Streamlit run function
 def run():
-    st.header("Bank PDF Processor")
+    st.header("FAB Bank PDF Processor")
 
-    uploaded_files = st.file_uploader("Upload one or more FAB Bank PDF statements", type="pdf", accept_multiple_files=True)
-    opening_balance_input = st.text_input("Optional: Enter Opening Balance (leave blank to auto-calculate)")
+    uploaded_files = st.file_uploader("Upload FAB Bank PDF statements", type="pdf", accept_multiple_files=True)
+    opening_balance_input = st.text_input("Enter Opening Balance (leave blank to auto-calculate)")
 
     if uploaded_files:
         try:
             opening_balance = float(opening_balance_input) if opening_balance_input.strip() else None
         except ValueError:
-            st.error("Invalid opening balance. Please enter a numeric value.")
+            st.error("Opening balance must be numeric.")
             return
 
-        st.info("Processing uploaded file(s)...")
-        df = process(uploaded_files, opening_balance)
+        all_dfs = []
+        for file in uploaded_files:
+            st.write(f"📄 Processing: {file.name}")
+            df = process_pdf(file, file.name)
+            all_dfs.append(df)
 
-        if df.empty:
-            st.warning("No transactions found in the uploaded PDF(s).")
+        if all_dfs:
+            final_df = pd.concat(all_dfs, ignore_index=True)
+
+            final_df['Balance'] = pd.to_numeric(final_df['Balance'], errors='coerce')
+            final_df['Extracted Amount'] = final_df['Balance'].diff()
+            if opening_balance is not None and not final_df.empty:
+                final_df.loc[0, 'Extracted Amount'] = final_df.loc[0, 'Balance'] - opening_balance
+
+            final_df['Extracted Amount'] = final_df['Extracted Amount'].round(2)
+
+            st.success("✅ Transactions Extracted")
+            st.dataframe(final_df)
+
+            csv = final_df.to_csv(index=False).encode("utf-8")
+            st.download_button("Download CSV", csv, "fab_transactions.csv", "text/csv")
         else:
-            st.success("Transactions extracted successfully!")
-            st.dataframe(df)
-
-            csv = df.to_csv(index=False).encode("utf-8")
-            st.download_button("Download CSV", csv, "fab_bank_transactions.csv", "text/csv")
+            st.warning("⚠️ No valid transactions found.")
