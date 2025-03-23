@@ -25,7 +25,7 @@ def run():
         st.warning("Invalid Opening Balance. It will default to auto-calculation.")
         opening_balance = None
         
-if not uploaded_files:
+     if not uploaded_files:
         st.info("📂 Please upload PDF files to begin.")
         return
 
