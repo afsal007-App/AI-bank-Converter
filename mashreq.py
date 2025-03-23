@@ -6,16 +6,27 @@ import streamlit as st
 from io import BytesIO
 
 def run():
-    st.title("📄 Bank PDF Processor")
-    
-    # Opening Balance Input
-    opening_balance = st.number_input("Enter Opening Balance", value=0.00, step=0.01, format="%.2f")
+    st.markdown("## 🏦 Bank PDF Processor")
+    st.markdown("Upload **FAB Bank PDF statements**")
 
-    # PDF Upload Input
-    uploaded_files = st.file_uploader("Upload one or more PDF statements", type=["pdf"], accept_multiple_files=True)
+    uploaded_files = st.file_uploader(
+        "Upload PDF files",
+        type=["pdf"],
+        accept_multiple_files=True,
+        label_visibility="collapsed"
+    )
+
+    opening_balance_input = st.text_input("Enter Opening Balance (leave blank to auto-calculate)")
+
+    # === Parse and Validate Opening Balance ===
+    try:
+        opening_balance = float(opening_balance_input.replace(",", "")) if opening_balance_input else None
+    except ValueError:
+        st.warning("Invalid Opening Balance. It will default to auto-calculation.")
+        opening_balance = None
 
     if not uploaded_files:
-        st.warning("Please upload at least one PDF file.")
+        st.info("📂 Please upload PDF files to begin.")
         return
 
     unwanted_phrases = [
