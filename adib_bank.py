@@ -68,34 +68,26 @@ def extract_and_structure_transactions_from_bytes(file_bytes, filename):
 
 # === Streamlit Integration ===
 def run():
-    st.header("ADIB Bank PDF Processor")
+    st.title("ADIB Bank PDF Processor")
 
     uploaded_files = st.file_uploader("Upload ADIB Bank PDF statements", type="pdf", accept_multiple_files=True)
 
     if uploaded_files:
         combined_df = pd.DataFrame()
 
-        for uploaded_file in uploaded_files:
-            file_bytes = uploaded_file.read()
-            df = extract_and_structure_transactions_from_bytes(file_bytes, uploaded_file.name)
-            st.markdown(f"✅ **{uploaded_file.name}** → {len(df)} transactions")
+        for file in uploaded_files:
+            file_bytes = file.read()
+            df = extract_and_structure_transactions_from_bytes(file_bytes, file.name)
             combined_df = pd.concat([combined_df, df], ignore_index=True)
 
         if not combined_df.empty:
-            st.success(f"🎉 Total transactions extracted: **{len(combined_df)}**")
             st.dataframe(combined_df)
 
-            output = io.BytesIO()
-            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-                combined_df.to_excel(writer, index=False, sheet_name='Transactions')
-                worksheet = writer.sheets['Transactions']
-                for i, col in enumerate(combined_df.columns):
-                    max_len = combined_df[col].astype(str).map(len).max()
-                    worksheet.set_column(i, i, max_len + 2)
-
+            # Download as CSV
+            csv_data = combined_df.to_csv(index=False).encode('utf-8')
             st.download_button(
-                label="📥 Download Excel File",
-                data=output.getvalue(),
-                file_name="adib_transactions.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                "📥 Download CSV",
+                data=csv_data,
+                file_name="adib_transactions.csv",
+                mime="text/csv"
             )
