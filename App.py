@@ -6,6 +6,7 @@ import al_jazira_bank
 import emirates_islamic_bank
 import fab_bank
 import Wio_bank
+import adib_bank
 
 # ==== Bank Mapping ====
 bank_modules = {
@@ -13,7 +14,8 @@ bank_modules = {
     "🏢 Al Jazira Bank": al_jazira_bank,
     "🕌 Emirates Islamic Bank": emirates_islamic_bank,
     "💳 FAB Bank": fab_bank,
-    "🧾 WIO Bank": Wio_bank
+    "🧾 WIO Bank": Wio_bank,
+    "🟢 ADIB Bank": adib_bank
 }
 
 # ==== Page Config ====
