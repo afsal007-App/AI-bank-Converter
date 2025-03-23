@@ -26,7 +26,7 @@ def run():
         opening_balance = None
 
     if not uploaded_files:
-        st.info("")
+        st.info()
         return
 
     unwanted_phrases = [
