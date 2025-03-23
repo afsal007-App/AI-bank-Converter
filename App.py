@@ -11,7 +11,7 @@ import adib_bank
 # ==== Bank Mapping ====
 bank_modules = {
     "🪙 RAK Bank": Rak_Bank,
-    "🪙 Al Jazira Bank - "Coming soon": al_jazira_bank,
+    "🪙 Al Jazira Bank - Coming soon": al_jazira_bank,
     "🪙 Emirates Islamic Bank": emirates_islamic_bank,
     "🪙 FAB Bank": fab_bank,
     "🪙 WIO Bank": Wio_bank,
