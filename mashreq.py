@@ -6,7 +6,7 @@ import streamlit as st
 from io import BytesIO
 
 def run():
-    st.title("📄 Bank Statement Parser")
+    st.title("📄 Bank PDF Processor")
     
     # Opening Balance Input
     opening_balance = st.number_input("Enter Opening Balance", value=0.00, step=0.01, format="%.2f")
