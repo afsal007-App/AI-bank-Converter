@@ -26,7 +26,7 @@ def run():
         opening_balance = None
 
     if not uploaded_files:
-        st.info("📂 Please upload PDF files to begin.")
+        st.info("")
         return
 
     unwanted_phrases = [
