@@ -128,11 +128,7 @@ def run():
 
     csv = final_df.to_csv(index=False).encode("utf-8")
     st.download_button("⬇️ Download CSV", csv, "all_statements_combined.csv", "text/csv")
-
-    excel_io = BytesIO()
-    final_df.to_excel(excel_io, index=False, engine='openpyxl')
-    excel_io.seek(0)
-    st.download_button("⬇️ Download Excel", excel_io, "all_statements_combined.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    
 
 # Only needed if you want this file to run standalone
 if __name__ == "__main__":
