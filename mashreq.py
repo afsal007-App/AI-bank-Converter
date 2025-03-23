@@ -2,6 +2,7 @@ import PyPDF2
 import re
 import pandas as pd
 import os
+import openpyxl
 import streamlit as st
 from io import BytesIO
 
