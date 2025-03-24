@@ -99,7 +99,8 @@ def process_pdf(pdf_file, filename="uploaded.pdf"):
 
 # Step 7: Streamlit run function
 def run():
-    st.header("Bank PDF Processor")
+    #st.header("Bank PDF Processor")
+    st.subheader("Bank PDF Processor")
 
     uploaded_files = st.file_uploader("Upload FAB Bank PDF statements", type="pdf", accept_multiple_files=True)
     opening_balance_input = st.text_input("Enter Opening Balance (leave blank to auto-calculate)")
