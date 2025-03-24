@@ -8,6 +8,7 @@ import fab_bank
 import Wio_bank
 import adib_bank
 import mashreq
+import adcb
 
 # ==== Bank Mapping ====
 bank_modules = {
@@ -18,6 +19,7 @@ bank_modules = {
     "🏛️ WIO Bank": Wio_bank,
     "🏤 ADIB Bank": adib_bank,
     "🏤 Mashreq Neo Bank": mashreq
+    "🏤 ADCB Bank": adcb
 }
 
 # ==== Page Config ====
