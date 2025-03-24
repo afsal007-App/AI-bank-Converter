@@ -83,7 +83,8 @@ def process(pdf_files):
 # -------------------- Streamlit UI --------------------
 
 def run():
-    st.header("Bank PDF Processor")
+    #st.header("Bank PDF Processor")
+    st.subheader("Bank PDF Processor")
 
     uploaded_files = st.file_uploader(
         "Upload Emirates Islamic Bank statement PDFs",
