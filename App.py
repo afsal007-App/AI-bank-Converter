@@ -18,7 +18,7 @@ bank_modules = {
     "🏬 FAB Bank": fab_bank,
     "🏛️ WIO Bank": Wio_bank,
     "🏤 ADIB Bank": adib_bank,
-    "🏤 Mashreq Neo Bank": mashreq
+    "🏤 Mashreq Neo Bank": mashreq,
     "🏤 ADCB Bank": adcb
 }
 
