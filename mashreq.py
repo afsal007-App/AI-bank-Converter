@@ -6,7 +6,8 @@ import streamlit as st
 from io import BytesIO
 
 def run():
-    st.markdown("## 🏦 Bank PDF Processor")
+    #st.markdown("## 🏦 Bank PDF Processor")
+    st.subheader("Bank PDF Processor")
     st.markdown("Upload **FAB Bank PDF statements**")
 
     uploaded_files = st.file_uploader(
