@@ -34,7 +34,8 @@ def extract_transactions_from_pdf(file):
     return all_data
 
 def run():
-    st.markdown("Bank PDF Processor")
+    #st.markdown("Bank PDF Processor")
+    st.subheader("Bank PDF Processor")
     st.markdown("Upload **ADCB Bank PDF statements**")
 
     uploaded_files = st.file_uploader(
