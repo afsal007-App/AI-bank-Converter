@@ -68,7 +68,8 @@ def extract_and_structure_transactions_from_bytes(file_bytes, filename):
 
 # === Streamlit Integration ===
 def run():
-    st.title("Bank PDF Processor")
+    #st.title("Bank PDF Processor")
+    st.subheader("Bank PDF Processor")
 
     uploaded_files = st.file_uploader("Upload ADIB Bank PDF statements", type="pdf", accept_multiple_files=True)
 
