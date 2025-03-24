@@ -80,7 +80,7 @@ def process_wio_pdfs(pdf_files):
 # ---------------------- Streamlit UI ----------------------
 
 def run():
-    st.header("Bank PDF Processor")
+    st.subheader("Bank PDF Processor")
 
     uploaded_files = st.file_uploader("Upload one or more Wio Bank PDF statements", type="pdf", accept_multiple_files=True)
 
